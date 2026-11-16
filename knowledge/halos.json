@@ -1,0 +1,51 @@
+{
+  "meta": {
+    "source": "本地代码：vendor/March7thAssistant/tasks/weekly/currency_wars_ui.py（Page.HALO / HALO_DETAIL / HALO_REPLACE / HALO_TIP / HALO_INFO、halo_effect 评分关键词、halo_refresh_status）、currency_wars.py（光环选择流程）；https://wiki.biligame.com/sr/货币战争 （未收录光环条目）、https://wiki.biligame.com/sr/货币战争/羁绊/幻月游戏（唱名规则）",
+    "note": "B站 wiki 目前没有独立的「主角光环一览」页面（搜索无结果、页面不存在），因此本文件只能给出可确证的机制与效果文本类型，具体每个角色的光环数值一律标注「未找到」，不做编造。"
+  },
+  "mechanic": {
+    "name": "主角光环",
+    "flow": "在固定节点进入「选择一个角色获得主角光环」界面：先在前台候选位中选定 1 名角色，再从左右两张光环效果中选择 1 个赋予该角色。",
+    "refresh": "可刷新光环效果：首次为「免费刷新」，之后每次 1 金币，界面还会显示「后续刷新费用 2」；正式服高职级可见最多约 8 次刷新额度。",
+    "replace": "若目标角色已有光环，会弹出「替换该角色原有光环」确认框。另有「重选主角」入口（主角光环与奇遇详情页 → 前往重选）。",
+    "source": "currency_wars_ui.py `halo_effect`/`halo_refresh_status`/`halo_replace`/`halo_info`"
+  },
+  "effect_types_observed": {
+    "positive_keywords": ["前台强度", "前/后台强度", "伤害增幅", "施放战技", "暴击", "恢复能量", "速度增幅", "额外伤害", "真实伤害", "幸运一击率", "幸运一击伤害", "获得金币"],
+    "resource_keywords": ["商店内概率刷出2星", "必定出现1个与该角色任一羁绊相同", "获得自身的一个复制"],
+    "support_keywords": ["获得治疗强度", "获得护盾强度", "倒计时延后", "行动值", "终结技"],
+    "negative_or_constraint_keywords": ["熄火", "只能造成1", "变为", "无法", "献祭", "离场", "乱披风拳法", "优先施放普攻", "自伤", "退回备战席", "同名角色不可上阵"],
+    "difficulty_modifier": "部分光环附带「敌人难度+N」，代码默认只接受 N ≤ 0 的光环（高难档位可放宽）",
+    "source": "currency_wars_ui.py `halo_effect`（自动选取时会避开负面词条，并统计正向词条数量）"
+  },
+  "known_related": [
+    {
+      "name": "幻造•主角光环",
+      "effect": "由「幻月游戏·唱名」规则 5 级直接获得 1 个【幻造•主角光环】",
+      "source": "https://wiki.biligame.com/sr/货币战争/羁绊/幻月游戏"
+    },
+    {
+      "name": "片场解散（投资策略）",
+      "effect": "你的主角们主角光环全部失效，并获得等同次数的更换主角机会",
+      "source": "https://wiki.biligame.com/sr/投资策略一览"
+    },
+    {
+      "name": "换角开演（投资策略）",
+      "effect": "获得 1 次更换主角的机会，并获得 10 次免费主角光环刷新",
+      "source": "https://wiki.biligame.com/sr/投资策略一览"
+    },
+    {
+      "name": "刷新连锁 / 刷新连锁+（投资策略）",
+      "effect": "刷新【主角光环】效果时获得 1 次商店免费刷新；分别获得 3 / 6 次免费主角光环刷新",
+      "source": "https://wiki.biligame.com/sr/投资策略一览"
+    },
+    {
+      "name": "霸占舞台（敌人词缀）",
+      "effect": "【主角光环】持有者造成 105% 原伤害，其他角色造成 80% 原伤害",
+      "source": "https://wiki.biligame.com/sr/竞争对手一览"
+    }
+  ],
+  "characters": [
+    {"name": "（各角色专属光环列表）", "status": "未找到", "note": "wiki 未建立「主角光环」条目，无法逐一列出每个角色的光环文本与数值。游戏内可在「主角光环与奇遇详情」页查看已拥有的光环。"}
+  ]
+}

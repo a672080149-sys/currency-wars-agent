@@ -1,0 +1,613 @@
+[
+  {
+    "name": "三月七•巡猎",
+    "cost": 1,
+    "position": "后台",
+    "tags": ["辅助", "输出"],
+    "traits": ["开拓银轨", "追击"],
+    "skill": "未找到（B站 wiki「货币战争/三月七•巡猎」的「入画奇航」段落为施工中，未填写技能）",
+    "star_notes": "通用规则：3 张同名同星卡自动升星，1→2→3 星，3 星通常为最强形态；wiki 未给出 S2 各星级数值差异",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币） ；https://wiki.biligame.com/sr/货币战争/三月七•巡猎"
+  },
+  {
+    "name": "刻律德菈",
+    "cost": 1,
+    "position": "后台",
+    "tags": ["辅助"],
+    "traits": ["小小巨人", "连击"],
+    "skill": "未找到（S2 段落施工中）。零和博弈版本为后台辅助向能力，S2 已改为 1 费后台辅助",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "忘归人",
+    "cost": 1,
+    "position": "前后台",
+    "tags": ["辅助"],
+    "traits": ["星间旅人", "击破"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "托帕&账账",
+    "cost": 1,
+    "position": "前后台",
+    "tags": ["输出", "辅助"],
+    "traits": ["千星商会", "追击"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "景元",
+    "cost": 1,
+    "position": "前后台",
+    "tags": ["输出"],
+    "traits": ["云上五骁", "召唤"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "桂乃芬",
+    "cost": 1,
+    "position": "前后台",
+    "tags": ["辅助", "输出"],
+    "traits": ["仙舟舰队", "持续伤害"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "波提欧",
+    "cost": 1,
+    "position": "前台",
+    "tags": ["输出"],
+    "traits": ["星间旅人", "击破"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "火花",
+    "cost": 1,
+    "position": "前后台",
+    "tags": ["输出"],
+    "traits": ["幻月游戏", "少女乐队", "欢愉"],
+    "skill": "未找到（S2 段落施工中）。注意「火花」与本作另一角色「花火」不是同一单位，本地代码 COSTS 中两者分别记为 1 费与 2 费",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "灵砂",
+    "cost": 1,
+    "position": "前后台",
+    "tags": ["治疗", "辅助"],
+    "traits": ["仙舟舰队", "群攻", "治疗"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "瓦尔特",
+    "cost": 1,
+    "position": "前后台",
+    "tags": ["输出", "辅助"],
+    "traits": ["开拓银轨", "群攻"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "真珠",
+    "cost": 1,
+    "position": "后台",
+    "tags": ["治疗", "辅助"],
+    "traits": ["幻月游戏", "千星商会", "守护"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）",
+    "note": "wiki 上同一角色另有以「珍珠」为标题的重复页面，本地代码使用「真珠」，此处按本地代码统一为「真珠」"
+  },
+  {
+    "name": "那刻夏",
+    "cost": 1,
+    "position": "前台",
+    "tags": ["输出"],
+    "traits": ["奇兽花园", "连击"],
+    "skill": "S2（入画奇航）档案为空，wiki 未填写。参考：零和博弈版本中那刻夏为 3 费后台，技能组为「研究的力量」（战技+天赋）：行动时施放战技「分形，驱逐虚知」，造成 140%/175%/252% 攻击力风属性伤害并额外弹射 4/5/6 次；天赋「四分明哲，三重至高」每次击中为目标添加随机属性弱点，5 个不同弱点触发【质性揭露】，对其伤害提高 30%/45%/60% 并追加 1 次战技；天赋「启智讲堂」暴伤提高 140%/180%/240%，我方小队伤害提高 25%/30%/40%（羁绊内双倍）",
+    "star_notes": "零和博弈版数值按 1/2/3 星给出（如 140%/175%/252%、4/5/6 次、30%/45%/60%、140%/180%/240%）。S2 变为 1 费前台输出，S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/货币战争/那刻夏 ；本地 currency_wars_strategy.py CORE=那刻夏 cost 1"
+  },
+  {
+    "name": "长夜月",
+    "cost": 1,
+    "position": "前后台",
+    "tags": ["输出", "辅助"],
+    "traits": ["奇兽花园", "梦境交织", "召唤"],
+    "skill": "未找到（S2 段落施工中）。零和博弈版为高费召唤向角色；S2 改为 1 费",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "黑天鹅",
+    "cost": 1,
+    "position": "后台",
+    "tags": ["输出"],
+    "traits": ["梦境交织", "持续伤害"],
+    "skill": "未找到（S2 段落施工中）。零和博弈版为 4 费后台持续伤害角色，独立羁绊「命运卜者」（占卜屋/启示卡）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "万敌",
+    "cost": 2,
+    "position": "前后台",
+    "tags": ["输出", "辅助"],
+    "traits": ["奇兽花园", "黄金大饭店", "反击"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "云璃",
+    "cost": 2,
+    "position": "前后台",
+    "tags": ["输出", "辅助"],
+    "traits": ["仙舟舰队", "反击"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "大黑塔",
+    "cost": 2,
+    "position": "前台",
+    "tags": ["输出"],
+    "traits": ["星间旅人", "群攻"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "娜塔莎",
+    "cost": 2,
+    "position": "后台",
+    "tags": ["治疗", "输出"],
+    "traits": ["星间旅人", "持续伤害", "治疗"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "星期日",
+    "cost": 2,
+    "position": "前后台",
+    "tags": ["辅助"],
+    "traits": ["幻月游戏", "开拓银轨", "连击"],
+    "skill": "未找到（S2 段落施工中）。零和博弈版为辅助/充能向角色，是本作「连击」「能量」体系的常见辅助",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "流萤",
+    "cost": 2,
+    "position": "前台",
+    "tags": ["输出"],
+    "traits": ["星核猎手", "击破"],
+    "skill": "S2（入画奇航）档案为空，wiki 未填写。参考：零和博弈版本为 5 费前台，「点燃大海」始终处于【完全燃烧】，获得攻击敌方全体的新终结技【超新星过载】（加火弱点、回血 50% 生命上限、造成 0.4*击破特攻+400% 攻击力火伤、全属性抗性降低 30%/40%/50% 持续 2 回合，并将削韧转化为 100%/120%/500% 超击破伤害）；天赋【完全燃烧】超击破倍率额外提高 50%/100%/250%，普攻/战技额外恢复 40/40/120 与 60/60/120 能量",
+    "star_notes": "零和博弈版按 1/2/3 星给出（30%/40%/50%、50%/100%/250%、100%/120%/500%）。S2 降为 2 费前台，S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/货币战争/流萤 ；本地 COSTS 流萤=2"
+  },
+  {
+    "name": "海瑟音",
+    "cost": 2,
+    "position": "前后台",
+    "tags": ["输出"],
+    "traits": ["奇兽花园", "持续伤害"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "白露",
+    "cost": 2,
+    "position": "后台",
+    "tags": ["治疗"],
+    "traits": ["云上五骁", "连击", "治疗"],
+    "skill": "未找到（S2 段落施工中）。S2 为 2 费后台治疗，是「连击」体系的后台奶位",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "知更鸟",
+    "cost": 2,
+    "position": "前台",
+    "tags": ["辅助"],
+    "traits": ["少女乐队", "追击"],
+    "skill": "未找到（S2 段落施工中）。少女乐队羁绊中提供「6%+团队规模上限*3% 伤害增幅」的独奏效果",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/羁绊/少女乐队"
+  },
+  {
+    "name": "知更鸟•晴歌",
+    "cost": 2,
+    "position": "前后台",
+    "tags": ["辅助"],
+    "traits": ["千星商会", "召唤", "能量"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "绯英",
+    "cost": 2,
+    "position": "前后台",
+    "tags": ["输出"],
+    "traits": ["幻月游戏", "能量"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "花火",
+    "cost": 2,
+    "position": "前台",
+    "tags": ["辅助"],
+    "traits": ["小小巨人", "梦境交织", "欢愉"],
+    "skill": "未找到（S2 段落施工中）。梦境交织（共舞）中花火的共舞效果为：施放战技，并使目标造成的伤害提高 40%，持续 2 回合",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/羁绊/梦境交织"
+  },
+  {
+    "name": "乱破",
+    "cost": 3,
+    "position": "后台",
+    "tags": ["输出"],
+    "traits": ["少女乐队", "击破"],
+    "skill": "未找到（S2 段落施工中）。少女乐队独奏效果：15% 前/后台强度，我方小队每携带 1 件装备额外提供 3%",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/羁绊/少女乐队"
+  },
+  {
+    "name": "大丽花",
+    "cost": 3,
+    "position": "前后台",
+    "tags": ["输出"],
+    "traits": ["梦境交织", "击破"],
+    "skill": "未找到（S2 段落施工中）。梦境交织共舞效果：使舞伴【共舞】效果提高 100%，并施放追加攻击",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/羁绊/梦境交织"
+  },
+  {
+    "name": "开拓者•欢愉",
+    "cost": 3,
+    "position": "前后台",
+    "tags": ["辅助"],
+    "traits": ["开拓银轨", "星核猎手", "能量"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "椒丘",
+    "cost": 3,
+    "position": "前台",
+    "tags": ["辅助", "输出"],
+    "traits": ["仙舟舰队", "持续伤害"],
+    "skill": "未找到（S2 段落施工中）。零和博弈版为持续伤害（灼烧）辅助",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "爻光",
+    "cost": 3,
+    "position": "后台",
+    "tags": ["辅助"],
+    "traits": ["千星商会", "欢愉"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "符玄",
+    "cost": 3,
+    "position": "后台",
+    "tags": ["治疗", "辅助"],
+    "traits": ["小小巨人", "反击", "守护"],
+    "skill": "未找到（S2 段落施工中）。S2 为 3 费后台，兼具治疗/守护功能，是生存位常见选择",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "罗刹",
+    "cost": 3,
+    "position": "前后台",
+    "tags": ["治疗", "辅助"],
+    "traits": ["星间旅人", "治疗"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "赛飞儿",
+    "cost": 3,
+    "position": "后台",
+    "tags": ["辅助"],
+    "traits": ["奇兽花园", "群攻"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "遐蝶",
+    "cost": 3,
+    "position": "前后台",
+    "tags": ["输出"],
+    "traits": ["黄金大饭店", "召唤"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "银狼LV.999",
+    "cost": 3,
+    "position": "前台",
+    "tags": ["输出"],
+    "traits": ["幻月游戏", "星核猎手", "欢愉"],
+    "skill": "未找到（S2 段落施工中）。独立羁绊「头号玩家」：升至 2 星时可选择变为更高费用的 1 星银狼LV.999，或获得一件不占装备栏的【骇客改件】；3 星 5 费时接管货币战争",
+    "star_notes": "2 星起触发改费/改件选择；3 星 5 费为「狼尊」形态",
+    "source": "https://wiki.biligame.com/sr/羁绊/头号玩家"
+  },
+  {
+    "name": "镜流",
+    "cost": 3,
+    "position": "前后台",
+    "tags": ["输出"],
+    "traits": ["云上五骁", "连击"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "飞霄",
+    "cost": 3,
+    "position": "前台",
+    "tags": ["输出"],
+    "traits": ["仙舟舰队", "追击"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "刃",
+    "cost": 4,
+    "position": "前后台",
+    "tags": ["输出"],
+    "traits": ["云上五骁", "反击"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "千冶•刃",
+    "cost": 4,
+    "position": "前后台",
+    "tags": ["输出", "辅助"],
+    "traits": ["幻月游戏", "星核猎手", "群攻"],
+    "skill": "未找到（S2 段落施工中）。零和博弈版「星核猎手」猎星人效果：每攻击 6 次，千冶•刃立即施放终结技攻击敌人（战斗开始已记录 3 次）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/羁绊/星核猎手"
+  },
+  {
+    "name": "姬子•启行",
+    "cost": 4,
+    "position": "前台",
+    "tags": ["输出"],
+    "traits": ["开拓银轨", "能量"],
+    "skill": "未找到（S2 段落施工中）。独立羁绊「领航员」：选择 1 名列车同行角色，获得其流派羁绊并复制其首件装备作为改件佩戴，同时强化自身与【光轨】",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/羁绊/领航员"
+  },
+  {
+    "name": "寒鸦",
+    "cost": 4,
+    "position": "后台",
+    "tags": ["辅助"],
+    "traits": ["仙舟舰队", "连击"],
+    "skill": "未找到（S2 段落施工中）。S2 为 4 费后台辅助，「连击」体系（额外回合/连击率）的关键后台位",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "希露瓦",
+    "cost": 4,
+    "position": "前台",
+    "tags": ["输出"],
+    "traits": ["少女乐队", "持续伤害"],
+    "skill": "未找到（S2 段落施工中）。少女乐队独奏效果：自身 1/2/3 星时使我方小队获得 16%/28%/40% 幸运一击率，并使持续伤害有 16%/28%/40% 固定概率触发幸运一击",
+    "star_notes": "1/2/3 星对应 16%/28%/40%（沿用 wiki 少女乐队条目数值）",
+    "source": "https://wiki.biligame.com/sr/羁绊/少女乐队"
+  },
+  {
+    "name": "昔涟",
+    "cost": 4,
+    "position": "前台",
+    "tags": ["辅助"],
+    "traits": ["黄金大饭店", "召唤"],
+    "skill": "未找到（S2 段落施工中）。独立羁绊「挚爱之人」：昔涟参与 1 场战斗后，诗篇在商店刷新，每个节点内最多购买 1 张",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/羁绊/挚爱之人"
+  },
+  {
+    "name": "星神★阿哈",
+    "cost": [4, 5, 7],
+    "position": "前台",
+    "tags": ["辅助"],
+    "traits": ["欢愉", "幻乐之主"],
+    "skill": "独立羁绊「幻乐之主」：获取星神★阿哈可积攒【幻月之力】以提高祂的费用；借助【幻月游戏】或【欢愉】角色的总星级升格，最终成为 7 费的欢愉星神。4 费起商店出现阿哈【神迹】，5 费起每节点使 2 名角色提升 1 费，7 费时可提升阿哈星级且【神迹】升格",
+    "star_notes": "费用随【幻月之力】从 4→5→7 费成长（本地代码亦将 4/5/7 三种形态视为特殊对象）",
+    "source": "https://wiki.biligame.com/sr/羁绊/幻乐之主 ；本地 currency_wars_strategy.py SPECIAL 列表"
+  },
+  {
+    "name": "砂金",
+    "cost": 4,
+    "position": "前后台",
+    "tags": ["护盾", "输出"],
+    "traits": ["星间旅人", "追击", "守护"],
+    "skill": "未找到（S2 段落施工中）。S2 为 4 费前后台护盾/守护位，本地推荐阵容中作为后台护盾位备选",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "砂金•戏浪",
+    "cost": 4,
+    "position": "前台",
+    "tags": ["输出"],
+    "traits": ["千星商会", "欢愉"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "缇宝",
+    "cost": 4,
+    "position": "前后台",
+    "tags": ["辅助", "输出"],
+    "traits": ["小小巨人", "追击"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "藿藿",
+    "cost": 4,
+    "position": "后台",
+    "tags": ["治疗", "辅助"],
+    "traits": ["小小巨人", "能量", "治疗"],
+    "skill": "未找到（S2 段落施工中）。S2 为 4 费后台治疗/充能位",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "风堇",
+    "cost": 4,
+    "position": "前后台",
+    "tags": ["治疗", "输出"],
+    "traits": ["奇兽花园", "召唤", "治疗"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "黄泉",
+    "cost": 4,
+    "position": "前台",
+    "tags": ["输出"],
+    "traits": ["梦境交织", "群攻"],
+    "skill": "未找到（S2 段落施工中）。梦境交织共舞效果：施放终结技，造成等同于原伤害 150% 的伤害",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/羁绊/梦境交织"
+  },
+  {
+    "name": "不死途",
+    "cost": 5,
+    "position": "后台",
+    "tags": ["输出"],
+    "traits": ["幻月游戏", "追击", "巡海游侠"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "丹恒•腾荒",
+    "cost": 5,
+    "position": "后台",
+    "tags": ["护盾"],
+    "traits": ["双龙吟"],
+    "skill": "独立羁绊「双龙吟」：丹恒•饮月在后台召唤星级相同的丹恒•腾荒并复制其装备；两者行动为【双龙吟】充能，充满 12 点时合击敌方全体并为我方前台提供护盾",
+    "star_notes": "丹恒•饮月 1/2/3 星时可为丹恒•腾荒穿戴 1/2/3 件装备",
+    "source": "https://wiki.biligame.com/sr/羁绊/双龙吟"
+  },
+  {
+    "name": "丹恒•饮月",
+    "cost": 5,
+    "position": "前台",
+    "tags": ["输出"],
+    "traits": ["开拓银轨", "云上五骁", "双龙吟"],
+    "skill": "独立羁绊「双龙吟」：在后台区域召唤星级相同的【丹恒•腾荒】并复制其穿戴的装备，可穿戴数量随星级提高；合击造成 1500% 虚数 + 1500% 物理基础伤害，并为我方前台提供等同于其生命上限 30% 的护盾",
+    "star_notes": "1/2/3 星对应可为丹恒•腾荒穿戴 1/2/3 件装备",
+    "source": "https://wiki.biligame.com/sr/羁绊/双龙吟"
+  },
+  {
+    "name": "克拉拉",
+    "cost": 5,
+    "position": "前后台",
+    "tags": ["输出", "辅助"],
+    "traits": ["星间旅人", "反击", "机心巧匠"],
+    "skill": "独立羁绊「机心巧匠」：每进入 2 个新节点克拉拉可对史瓦罗进行强化改装（上场时立即首次改装，前 3 次改装只需 1 个节点），每拥有 1 个改装使克拉拉伤害增幅提高 6%",
+    "star_notes": "通用升星规则同上；改装相关数值未找到",
+    "source": "https://wiki.biligame.com/sr/羁绊/机心巧匠"
+  },
+  {
+    "name": "卡芙卡",
+    "cost": 5,
+    "position": "前台",
+    "tags": ["输出", "辅助"],
+    "traits": ["星核猎手", "持续伤害"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "帕姆王",
+    "cost": 5,
+    "position": "后台",
+    "tags": ["输出", "辅助"],
+    "traits": ["开拓银轨"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "白厄",
+    "cost": 5,
+    "position": "前后台",
+    "tags": ["输出", "辅助"],
+    "traits": ["黄金大饭店", "盗火行者"],
+    "skill": "独立羁绊「盗火行者」：每个备战阶段可将 1 个角色持续拖动给白厄转化为火种，按价值永久获得【薪火】（黄金裔额外 +30%）。前台每点【薪火】+2% 伤害增幅与 2% 速度增幅，后台每点 +3% 小队伤害增幅；变身后召唤【盗火行者】削减挑战进度上限，进度达上限触发【灭世】直接获胜",
+    "star_notes": "通用升星规则同上；【薪火】收益与变身数值未找到分星级数据",
+    "source": "https://wiki.biligame.com/sr/羁绊/盗火行者 ；本地 SPECIAL 列表（拖放机制特殊对象）"
+  },
+  {
+    "name": "翡翠",
+    "cost": 5,
+    "position": "后台",
+    "tags": ["输出", "辅助"],
+    "traits": ["千星商会", "群攻", "黑市主理人"],
+    "skill": "独立羁绊「黑市主理人」：翡翠开启黑市商店，出售 1 款可无限次购买的招牌商品与随节点刷新的轮换商品；1/2/3 星翡翠出售 1/2/3 种轮换商品",
+    "star_notes": "1/2/3 星对应 1/2/3 种轮换普通商品",
+    "source": "https://wiki.biligame.com/sr/羁绊/黑市主理人"
+  },
+  {
+    "name": "阿格莱雅",
+    "cost": 5,
+    "position": "前台",
+    "tags": ["输出"],
+    "traits": ["奇兽花园", "连击"],
+    "skill": "未找到（S2 段落施工中）",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币）"
+  },
+  {
+    "name": "雪衣",
+    "cost": 5,
+    "position": "前台",
+    "tags": ["输出", "辅助"],
+    "traits": ["仙舟舰队", "击破"],
+    "skill": "未找到（S2 段落施工中）。S2 为 5 费前台，本地高难阵容将其作为前台辅助/副输出使用",
+    "star_notes": "通用升星规则同上；S2 数值未找到",
+    "source": "https://wiki.biligame.com/sr/角色一览（货币） ；本地 currency_wars_strategy.py HIGH_* 阵容 front"
+  }
+]

@@ -1,0 +1,21 @@
+# 凭证（每次运行自动生成，绝不提交）
+bridge/.token
+小克工作台/token.txt
+小克工作台/webview-data/
+小克工作台/cw.json
+
+# 运行产物
+小克工作台/录像/
+小克工作台/小克工作台.exe
+小克工作台/pet/*.png
+bridge/shots/
+bridge/logs/
+bridge/portraits/
+bridge/icons/
+bridge/*.log
+bridge/smoke.png
+__pycache__/
+*.pyc
+
+# 依赖
+vendor/
