@@ -14,6 +14,8 @@ from module.automation import auto
 from tasks.weekly import currency_wars_ui as ui
 from tasks.weekly.currency_wars_ui import Page, equipment_name
 
+from player import to_trailblazer
+
 SHOP_BTN = (1624, 982)
 SHOP_ROW_AREA = (367, 60, 1700, 340)
 REFRESH_BTN = (1618, 488)
@@ -25,7 +27,7 @@ INVENTORY_COLUMNS = (1765, 1844)  # 物品栏左列、右列中心 x
 COMBINE_OK_DY = 76  # 物品拖到物品上合成时，确认 ✓ 在 (1820, 目标y+76)
 BOARD_PAGES = (Page.BOARD,)
 NOTE = {"寒鸦", "白露", "千冶·刃", "星期日", "缇宝", "知更鸟", "灵砂", "罗刹", "符玄", "砂金", "花火", "雪衣",
-        "风堇", "波提欧", "乱破", "大丽花", "流萤", "开拓者", "CT"}
+        "风堇", "波提欧", "乱破", "大丽花", "流萤", "开拓者", "开拓者·欢愉"}
 
 
 # ---------------------------------------------------------------- 低层
@@ -86,7 +88,7 @@ def norm(name):
     name = (name or "").replace("干冶", "千冶").replace("•", "·").strip()
     if name == "星神☆阿哈":
         return "星神★阿哈"
-    return "开拓者·欢愉" if name.upper() == "CT" else name
+    return to_trailblazer(name)  # 开拓者显示的是玩家昵称，见 player.py / player.json
 
 
 # ---------------------------------------------------------------- 组合操作

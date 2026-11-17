@@ -1,0 +1,5 @@
+{
+  "_说明": "复制为 player.json 后修改。trailblazer_name：货币战争里开拓者显示的是玩家昵称，不填就认不出开拓者。ds_backend：DS 用哪个后端，workbuddy（默认）或 dsh（DeepSeek Harness）。player.json 不会提交到仓库。",
+  "trailblazer_name": "你的游戏昵称",
+  "ds_backend": "workbuddy"
+}

@@ -29,7 +29,6 @@ ZONE_CN = {"front": "前", "back": "后", "bench": "备"}
 LIB = IconLib()
 _KNOW = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "knowledge", "characters.json")
 POS = {"前台": "前", "后台": "后", "前后台": "前后"}
-ALIAS = {"CT": "开拓者•欢愉"}
 
 
 def _chars():
@@ -44,7 +43,7 @@ CHARS = _chars()
 
 
 def char_info(name):
-    n = A.norm(ALIAS.get(name, name))
+    n = A.norm(name)
     if n in CHARS:
         return CHARS[n]
     hits = [c for k, c in CHARS.items() if n and (n in k or k in n)]

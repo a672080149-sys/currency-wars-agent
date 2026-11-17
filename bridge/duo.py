@@ -24,6 +24,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import ds_client  # noqa: E402
+from player import to_trailblazer  # noqa: E402
 import workbench  # noqa: E402
 from client import BridgeError, call  # noqa: E402
 
@@ -185,7 +186,7 @@ def _norm(n):
     name = (n or "").replace("干冶", "千冶").replace("•", "·").strip()
     if name == "星神☆阿哈":
         return "星神★阿哈"
-    return "开拓者·欢愉" if name.upper() == "CT" else name
+    return to_trailblazer(name)  # 开拓者显示的是玩家昵称，见 player.py / player.json
 
 
 def current_lineup():

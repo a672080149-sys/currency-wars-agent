@@ -29,8 +29,9 @@ AI 通过接口读取游戏画面（已尽量转成文字）、买卡、上阵�
    ```
    （生成 `vendor\March7thAssistant\.venv`；工作台和桥接默认用这里的 Python。）
    本项目基于上面这个提交开发和测试，未修改 March7thAssistant 的代码。
-3. **运行**：双击 `小克工作台\小克工作台.exe`，点「启动星穹 · 货币战争」。默认是云游戏模式（`cw.json` 里 `mode: cloud`，首次运行自动生成），第一次需要在左上画面里自己登录。登录态保存在 `小克工作台\webview-data\`，**不要分享这个目录**。
-4. **让 AI 操作**：在仓库根目录打开 Claude Code，批准 `currency-wars` MCP；或者直接用命令行：
+3. **填开拓者昵称**：货币战争里开拓者显示的是你自己的游戏昵称。把 `bridge/player.example.json` 复制成 `bridge/player.json`，把 `trailblazer_name` 改成你的昵称（也可以设环境变量 `CW_TRAILBLAZER_NAME`）。不填的话开拓者会被当成未知角色。
+4. **运行**：双击 `小克工作台\小克工作台.exe`，点「启动星穹 · 货币战争」。默认是云游戏模式（`cw.json` 里 `mode: cloud`，首次运行自动生成），第一次需要在左上画面里自己登录。登录态保存在 `小克工作台\webview-data\`，**不要分享这个目录**。
+5. **让 AI 操作**：在仓库根目录打开 Claude Code，批准 `currency-wars` MCP；或者直接用命令行：
    ```bat
    vendor\March7thAssistant\.venv\Scripts\python.exe -X utf8 bridge\cw.py look
    ```
@@ -54,9 +55,12 @@ AI 通过接口读取游戏画面（已尽量转成文字）、买卡、上阵�
 
 ## 双人模式：小克 × DS
 
-两个 AI 同台打：DS（[WorkBuddy](https://www.codebuddy.cn/) 自带 CLI 跑的 DeepSeek）读局面、提操作意见；小克（Claude）判断后同意或反对，最多讨论两轮，之后由小克拍板，再由 DS 执行。工作台思考栏底部并排两个桌宠，各自的气泡显示发言，上方是带「提议/同意/反对/决定/执行」标签的对话记录。
+两个 AI 同台打：DS（DeepSeek）读局面、提操作意见；小克（Claude）判断后同意或反对，最多讨论两轮，之后由小克拍板，再由 DS 执行。工作台思考栏底部并排两个桌宠，各自的气泡显示发言，上方是带「提议/同意/反对/决定/执行」标签的对话记录。
 
-- DS 不拿任何工具、不加载 MCP，只读文字回 JSON；操作由 `bridge/duo.py` 按白名单代她执行。
+- **DS 的后端二选一**（在 `bridge/player.json` 写 `"ds_backend"`，或设环境变量 `DS_BACKEND`）：
+  - `dsh`：[DeepSeek Harness](https://github.com/mrRisega/dsh-remote)（DSH，用的人更多）。先在 `dsh web` 的 Models 页填好 DeepSeek API Key（或设 `DEEPSEEK_API_KEY`），程序调用 `dsh headless`；找不到 `dsh` 时可用环境变量 `DSH_CMD` 指定 `dsh.cmd` 路径。注意 `dsh headless` 没有关闭工具的参数，只能靠提示词要求它不用工具，并在空临时目录里运行。
+  - `workbuddy`（默认）：WorkBuddy 自带的 CodeBuddy CLI（默认 DeepSeek V4.1 Flash），不给任何工具、不加载 MCP。
+- 两种后端 DS 都只读文字、回 JSON；真正的操作由 `bridge/duo.py` 按白名单代她执行。
 - 规则拆成通用规则 `bridge/duo_ds_system.md` + 可切换阵容 `bridge/duo_lineups/<名>.md`（当前阵容写在 `bridge/duo_lineup.txt`），刷新目标按 `<名>.want.json` 的终局星级自动算缺口。
 - 通用打法经验见 `knowledge/通用对局规则.md`。
 - `bridge/duo_auto.py` 让 DS 单独连续打完一局（无人审核，适合挂机，结束时自动停止录像）。

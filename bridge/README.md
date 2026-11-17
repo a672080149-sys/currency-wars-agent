@@ -79,7 +79,7 @@ Claude Code ──MCP(stdio)──> bridge/mcp_server.py   普通权限，uv 临
 
 ## 双人模式：小克 × DS（2026-11-17，duo.py）
 
-DS = WorkBuddy 自带 CodeBuddy CLI 跑的 DeepSeek V4.1 Flash（`ds_client.py`，每次约 5 秒）。DS 不拿任何工具、不加载 MCP，只读文字回 JSON；操作由 `duo.py` 按白名单代她执行。人设、打法规则、可用操作和输出格式在 `duo_ds_system.md`。
+DS = DeepSeek，由 `ds_client.py` 调用，两种后端：`dsh`（DeepSeek Harness 的 `dsh headless`，需先在 dsh web 的 Models 页填 API Key）或 `workbuddy`（WorkBuddy 自带 CodeBuddy CLI，默认，每次约 5 秒）。在 `player.json` 写 `"ds_backend"` 或设环境变量 `DS_BACKEND` 选择。DS 不拿任何工具、不加载 MCP，只读文字回 JSON；操作由 `duo.py` 按白名单代她执行。人设、打法规则、可用操作和输出格式在 `duo_ds_system.md`。
 
 每一步的流程（小克=Claude 在 bridge 目录运行）：
 
@@ -96,7 +96,7 @@ DS 回复「同意」时以小克给出的操作为准（她偶尔会把旧方�
 
 ### 银狼执行规则更新 · 2026-11-18
 
-`duo_lineups/silverwolf.md` 保存用户确认的过渡、站位、改件和装备规则；`silverwolf.want.json` 保存基准星级目标，真珠顺手追三星，花火在砂金前台上阵后退出自动购卡目标。第9人为开拓者CT，不追6欢愉。主C之外按费用和实际作用优先换强力角色，不能只按星级保留低费卡；用 `buy` 或 `roll.want` 指定需要的替换角色。CT与开拓者·欢愉在识别和购卡缺口中按同一角色处理。
+`duo_lineups/silverwolf.md` 保存用户确认的过渡、站位、改件和装备规则；`silverwolf.want.json` 保存基准星级目标，真珠顺手追三星，花火在砂金前台上阵后退出自动购卡目标。第9人为开拓者，不追6欢愉。主C之外按费用和实际作用优先换强力角色，不能只按星级保留低费卡；用 `buy` 或 `roll.want` 指定需要的替换角色。开拓者在游戏里显示玩家自己的昵称，需在 `player.json` 填写（见 `player.example.json`），填写后昵称与开拓者·欢愉在识别和购卡缺口中按同一角色处理。
 
 `duo.py` 对银狼的 `exp`、`roll`、`fight` 执行经济检查：买经验保50金，先到7级；银狼三星前停买经验，按55金底线搜银狼；三星后停止专门搜牌，买经验最多到9级。真珠未三星不会延长刷新。原始桥接接口和其他阵容不自动套用此阶段规则。
 

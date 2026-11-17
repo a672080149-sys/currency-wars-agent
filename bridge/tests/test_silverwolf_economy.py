@@ -5,8 +5,11 @@ import io
 from pathlib import Path
 import sys
 from types import SimpleNamespace
+import os
 import unittest
 from unittest.mock import patch
+
+os.environ["CW_TRAILBLAZER_NAME"] = "CT"  # 测试用的开拓者昵称（真实使用时在 player.json 里填自己的）
 
 BRIDGE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BRIDGE))
@@ -154,7 +157,8 @@ class ActionLoopTests(unittest.TestCase):
     def test_actual_shop_normalization_matches_ct_alias_only(self):
         tree = ast.parse((BRIDGE / "actions.py").read_text(encoding="utf-8-sig"))
         norm = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "norm")
-        env = {}
+        import player
+        env = {"to_trailblazer": player.to_trailblazer}
         exec(compile(ast.Module(body=[norm], type_ignores=[]), "actions.py", "exec"), env)
         self.assertEqual(env["norm"]("CT"), env["norm"]("开拓者•欢愉"))
         self.assertEqual(env["norm"](" ct "), duo._norm("CT"))
@@ -238,3 +242,17 @@ class ActionLoopTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TrailblazerNameTests(unittest.TestCase):
+    def test_nickname_comes_from_config_not_hardcoded(self):
+        import player
+        with patch.dict(os.environ, {"CW_TRAILBLAZER_NAME": "星际旅人"}), patch.object(player, "CONFIG", "__no_such_file__.json"):
+            self.assertEqual(player.to_trailblazer("星际旅人"), "开拓者·欢愉")
+            self.assertEqual(player.to_trailblazer("CT"), "CT")
+
+    def test_no_config_means_no_mapping(self):
+        import player
+        with patch.dict(os.environ, {"CW_TRAILBLAZER_NAME": ""}), patch.object(player, "CONFIG", "__no_such_file__.json"):
+            self.assertEqual(player.to_trailblazer("CT"), "CT")
+            self.assertEqual(player.to_trailblazer("开拓者•欢愉"), "开拓者·欢愉")
