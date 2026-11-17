@@ -115,6 +115,14 @@ namespace AppPilot
                 ffExe = exe;
                 StartAudio();
 
+                if (StartWgc(h))
+                {
+                    videoStart = lastSpawn;
+                    started = DateTime.Now; frames = 0; grabbed = 0; stopping = false;
+                    worker = null;
+                    agent.Record("开始录像 " + Path.GetFileName(file), this.fps + "fps (窗口采集,只录工作台,被遮挡也不影响)", "running");
+                    return Describe();
+                }
                 if (StartDda(exe, h))
                 {
                     videoStart = lastSpawn;
@@ -195,6 +203,81 @@ namespace AppPilot
             }
             catch { }
             return false;
+        }
+
+        /// <summary>
+        /// 首选:ffmpeg 8+ 的 gfxcapture(Windows Graphics Capture,和 OBS「窗口采集」同一套接口)。
+        /// 只录工作台窗口自己的画面,被别的窗口挡住、切到桌面都不会录进去(最小化时没有画面);GPU 抓取 + nvenc 编码。
+        /// 需要支持 gfxcapture 的 ffmpeg(如 winget 的 Gyan.FFmpeg);找不到或失败返回 false,退回 ddagrab。
+        /// </summary>
+        bool StartWgc(IntPtr h)
+        {
+            string exe = FindWgcFfmpeg();
+            if (exe == null) return false;
+            try
+            {
+                RECT r;
+                if (!Native.GetWindowRect(h, out r)) return false;
+                width = r.Width & ~1; height = r.Height & ~1;
+                string dir = Path.Combine(AppDir, "录像");
+                Directory.CreateDirectory(dir);
+                file = Path.Combine(dir, DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".mp4");
+                string src = "-hide_banner -loglevel warning -y -f lavfi -i \"gfxcapture=hwnd=" + h.ToInt64() +
+                             ":max_framerate=" + fps + ":capture_cursor=0:width=-2:height=-2\" -r " + fps + " ";
+                string tail = " -movflags +frag_keyframe+empty_moov+default_base_moof \"" + file + "\"";
+                foreach (string enc in new[] { "-c:v hevc_nvenc -preset p4 -rc vbr -cq 30 -b:v 0", "-c:v h264_nvenc -preset p4 -rc vbr -cq 28 -b:v 0" })
+                {
+                    Process p = SpawnArgs(exe, src + enc + tail);
+                    if (!p.WaitForExit(2500)) { ff = p; ffExe = exe; method = "wgc"; return true; }
+                    try { System.IO.File.Delete(file); } catch { }
+                }
+            }
+            catch { }
+            return false;
+        }
+
+        static string wgcFfmpeg;
+        static bool wgcChecked;
+
+        /// <summary>找一个支持 gfxcapture 的 ffmpeg:ffmpeg.txt 指定的 → 程序目录 → winget(Gyan.FFmpeg) → PATH。结果缓存。</summary>
+        static string FindWgcFfmpeg()
+        {
+            if (wgcChecked) return wgcFfmpeg;
+            wgcChecked = true;
+            List<string> cands = new List<string>();
+            string first = FindFfmpeg();
+            if (first != null) cands.Add(first);
+            cands.Add(Path.Combine(AppDir, "ffmpeg.exe"));
+            string local = Environment.GetEnvironmentVariable("LOCALAPPDATA") ?? "";
+            try
+            {
+                string pk = Path.Combine(local, @"Microsoft\WinGet\Packages");
+                if (Directory.Exists(pk))
+                    foreach (string d in Directory.GetDirectories(pk, "Gyan.FFmpeg*"))
+                        cands.AddRange(Directory.GetFiles(d, "ffmpeg.exe", SearchOption.AllDirectories));
+            }
+            catch { }
+            cands.Add(Path.Combine(local, @"Microsoft\WinGet\Links\ffmpeg.exe"));
+            foreach (string dir in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(';'))
+                if (dir.Trim() != "") cands.Add(Path.Combine(dir.Trim(), "ffmpeg.exe"));
+            foreach (string c in cands.Distinct())
+            {
+                try
+                {
+                    if (!System.IO.File.Exists(c)) continue;
+                    ProcessStartInfo psi = new ProcessStartInfo(c, "-hide_banner -h filter=gfxcapture");
+                    psi.UseShellExecute = false; psi.CreateNoWindow = true;
+                    psi.RedirectStandardOutput = true; psi.RedirectStandardError = true;
+                    using (Process p = Process.Start(psi))
+                    {
+                        string o = p.StandardOutput.ReadToEnd() + p.StandardError.ReadToEnd();
+                        p.WaitForExit(5000);
+                        if (o.Contains("gfxcapture AVOptions")) { wgcFfmpeg = c; return c; }
+                    }
+                }
+                catch { }
+            }
+            return null;
         }
 
         int SafePid() { try { return audioPid(); } catch { return 0; } }
@@ -286,7 +369,7 @@ namespace AppPilot
             if (p == null) return Describe();
             stopping = true;
             if (t != null) t.Join(3000);
-            if (method == "ddagrab") { try { p.StandardInput.Write("q"); p.StandardInput.Flush(); } catch { } }
+            if (method == "ddagrab" || method == "wgc") { try { p.StandardInput.Write("q"); p.StandardInput.Flush(); } catch { } }
             try { p.StandardInput.BaseStream.Flush(); p.StandardInput.Close(); } catch { }
             if (!p.WaitForExit(15000)) try { p.Kill(); } catch { }
             Dictionary<string, object> d = Describe();

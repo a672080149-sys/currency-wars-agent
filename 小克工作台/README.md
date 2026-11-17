@@ -146,11 +146,12 @@ Invoke-WebRequest "http://127.0.0.1:8765/api/screenshot?id=$($w.id)" -Headers $h
 操作面板的 **● 开始录像** 按钮(录制中显示「■ 停止录像 时:分:秒」),或接口 `POST /api/record {action: start|stop|status, fps?: 60}`。
 
 - 录的是 小克工作台 整个窗口(内嵌游戏画面、思考、日志、桌宠)。
-- **工作台在主屏上时**用 ffmpeg ddagrab(桌面复制,GPU 抓屏 + 显卡 HEVC 编码):原分辨率 60 FPS,几乎不占 CPU,4K 约 60 MB/分钟。抓的是屏幕上那块区域,**录像期间别让其他窗口挡住工作台**,也别移动/改变窗口大小。
+- **首选窗口采集**(ffmpeg 8+ 的 gfxcapture,也就是 Windows Graphics Capture,和 OBS「窗口采集」同一套接口):只录工作台窗口自己的画面,**被别的窗口挡住、切到桌面都不会录进去**(最小化时没有画面);GPU 抓取 + 显卡 HEVC 编码,原分辨率 60 FPS。`/api/record status` 的 `method` 显示 `wgc`。
+- **没有 ffmpeg 8+ 时**,工作台在主屏上用 ffmpeg ddagrab(桌面复制,GPU 抓屏 + 显卡 HEVC 编码):原分辨率 60 FPS,几乎不占 CPU,4K 约 60 MB/分钟。抓的是屏幕上那块区域,**录像期间别让其他窗口挡住工作台**,也别移动/改变窗口大小。
 - 工作台不在主屏或显卡编码不可用时,退回 PrintWindow 抓窗口(被挡住也能录,但大窗口只有十几 FPS,画面缩到 1920 宽)。`/api/record status` 的 `method` 显示用的是哪种。
 - **声音**:按进程录(Windows 进程回环,Win10 2004+/Win11),只录游戏的声音,别的程序的提示音不会进去:云游戏录内嵌浏览器,本地模式录 `StarRail.exe`。录制时先写 `录像\<时间>.pcm`,停止时用 ffmpeg 合进 mp4(AAC 192k)并删掉 pcm;合成失败时 pcm 会留着。`/api/record status` 的 `audio` 显示录音状态。
 - 存到程序目录 `录像\<时间>.mp4`,ffmpeg 的报错写在 `录像\ffmpeg.log`。mp4 用分片格式,程序意外退出也能播放已录部分。
-- 需要 ffmpeg(7.x,带 ddagrab 和 nvenc):按顺序找 `ffmpeg.txt` 里写的路径 → 程序目录 `ffmpeg.exe` / `ffmpeg\ffmpeg.exe` → PATH → 本机已知位置(FormatFactory 的 ffmpeg 7.1)。
+- 需要 ffmpeg:推荐 8.0 以上(带 gfxcapture,例如 `winget install Gyan.FFmpeg`),程序会自动在 winget 安装位置和 PATH 里找支持 gfxcapture 的版本;否则用 7.x(带 ddagrab 和 nvenc)。普通 ffmpeg 查找顺序:按顺序找 `ffmpeg.txt` 里写的路径 → 程序目录 `ffmpeg.exe` / `ffmpeg\ffmpeg.exe` → PATH → 本机已知位置(FormatFactory 的 ffmpeg 7.1)。
 - 关闭 小克工作台 时会自动停止并保存录像。
 - 货币战争 MCP 里对应 `cw_record`。
 
