@@ -36,6 +36,9 @@ namespace AppPilot
     {
         public const string Main = "xiaoke";
         public const string Partner = "ds";
+        public const int MaxSpeakers = 4;
+        /// <summary>4 个发言位的标识:1 号位小克、2 号位 DS、3/4 号位 p3/p4。</summary>
+        public static readonly string[] Ids = { Main, Partner, "p3", "p4" };
 
         class Speaker
         {
@@ -48,8 +51,12 @@ namespace AppPilot
         readonly object sync = new object();
         readonly Dictionary<string, Speaker> speakers = new Dictionary<string, Speaker>
         {
-            { Main, new Speaker { Name = "小克" } }, { Partner, new Speaker { Name = "DS" } }
+            { Main, new Speaker { Name = "小克" } }, { Partner, new Speaker { Name = "DS" } },
+            { "p3", new Speaker { Name = "3号" } }, { "p4", new Speaker { Name = "4号" } }
         };
+
+        /// <summary>发言位序号(0 起);未知时为 0。</summary>
+        public static int SlotOf(string who) { return Math.Max(0, Array.IndexOf(Ids, Normalize(who))); }
         List<PlanStep> plan = new List<PlanStep>();
         List<string> goals = new List<string>();
         readonly List<string> history = new List<string>();
@@ -60,7 +67,20 @@ namespace AppPilot
         public static string Normalize(string who)
         {
             string w = (who ?? "").Trim().ToLowerInvariant();
-            return (w == "ds" || w == "deepseek" || w == "partner" || w == "workbuddy") ? Partner : Main;
+            if (w == "ds" || w == "deepseek" || w == "partner" || w == "workbuddy" || w == "dsh" || w == "2" || w == "p2") return Partner;
+            if (w == "p3" || w == "3") return "p3";
+            if (w == "p4" || w == "4") return "p4";
+            return Main;
+        }
+
+        /// <summary>agent 参数也可以直接写显示名(如「ChatGPT」),按当前各位的名字匹配;匹配不到再按标识解析。</summary>
+        public string Resolve(string who)
+        {
+            string w = (who ?? "").Trim();
+            lock (sync)
+                foreach (KeyValuePair<string, Speaker> kv in speakers)
+                    if (w != "" && string.Equals(kv.Value.Name, w, StringComparison.OrdinalIgnoreCase)) return kv.Key;
+            return Normalize(w);
         }
 
         public string NameOf(string who) { lock (sync) return Get(who).Name; }
@@ -228,6 +248,10 @@ namespace AppPilot
                 d["ds_thought"] = speakers[Partner].Thought;
                 d["main_name"] = speakers[Main].Name;
                 d["partner_name"] = speakers[Partner].Name;
+                d["speakers"] = Ids.Select(id => new Dictionary<string, object>
+                {
+                    { "agent", id }, { "name", speakers[id].Name }, { "thought", speakers[id].Thought }
+                }).ToList();
                 d["goal"] = goals.ToList();
                 d["plan"] = plan.Select(s => new Dictionary<string, object> { { "text", s.Text }, { "status", s.Status } }).ToList();
                 d["dialog"] = dialog.Skip(Math.Max(0, dialog.Count - 10)).Select(e => new Dictionary<string, object>
@@ -633,7 +657,7 @@ namespace AppPilot
                         agent.SetGoals(goals);
                     }
                     if (a.ContainsKey("step")) agent.SetStep(Int(a, "step", 0));
-                    string who = AgentState.Normalize(Str(a, "agent", AgentState.Main));
+                    string who = agent.Resolve(Str(a, "agent", AgentState.Main));
                     string thought = Str(a, "thought", null) ?? Str(a, "text", null);
                     if (thought != null) agent.Say(who, thought, Str(a, "kind", "say"));
                     string note = Str(a, "note", null);
@@ -668,7 +692,7 @@ GET  /api/ui_tree?id=1[&max=300]       界面元素树(名称、类型、位置�
 POST /api/ui_action {id,element|name|automation_id,action?=invoke|set_value|toggle|select|expand|collapse,value?}
 POST /api/cloud    {action=open|hide|reload|status}   内嵌云·星穹铁道(WebView2,带 CDP 调试端口)
 POST /api/record   {action=start|stop|status, fps?=60}   录制整个 小克工作台 窗口,存到 录像\*.mp4
-POST /api/status   {agent?=xiaoke|ds,kind?=say|propose|agree|object|decide|exec|ask,thought?,goal?:文字或[文字](当前游戏目标,| 或换行分隔),plan?:[文字或{text,status}],step?,clear?,note?,reason?,mood?}   上报 AI 的思考与计划(step 为当前进行到第几步,从 1 开始);note 记一条操作日志,mood=oops 记为出错
+POST /api/status   {agent?=xiaoke|ds|p3|p4 或 1-4 或显示名,kind?=say|propose|agree|object|decide|exec|ask,thought?,goal?:文字或[文字](当前游戏目标,| 或换行分隔),plan?:[文字或{text,status}],step?,clear?,note?,reason?,mood?}   上报 AI 的思考与计划(step 为当前进行到第几步,从 1 开始);note 记一条操作日志,mood=oops 记为出错
 
 建议流程:status 上报计划 → launch → screenshot 看界面 → click/type/key 操作 → screenshot 验证。
 click/drag/type/key/scroll 都可带 mode:

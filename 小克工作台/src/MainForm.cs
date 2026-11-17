@@ -119,6 +119,26 @@ namespace AppPilot
         }
 
         readonly Sprite[] sprites;
+        int count = 2;
+
+        /// <summary>1~4 号位的气泡/名字颜色:橙、蓝、绿、紫。</summary>
+        public static readonly Color[] SlotColors =
+        {
+            Color.FromArgb(232, 160, 70), Color.FromArgb(77, 107, 254), Color.FromArgb(46, 160, 90), Color.FromArgb(150, 80, 200)
+        };
+
+        /// <summary>显示几个形象(1~4)。没有素材的位置不显示。</summary>
+        public int Count
+        {
+            get { return count; }
+            set
+            {
+                count = Math.Max(1, Math.Min(sprites.Length, value));
+                for (int i = 0; i < sprites.Length; i++) sprites[i].Visible = i < count && !string.IsNullOrEmpty(sprites[i].Dir);
+                PerformLayout();
+                Invalidate();
+            }
+        }
 
         /// <param name="mainDir">小克的素材目录</param>
         /// <param name="partnerDir">搭档的素材目录(null 时只显示小克)</param>
@@ -135,9 +155,11 @@ namespace AppPilot
             nameFont = new Font(Theme.FontName, 9f, FontStyle.Bold);
             sprites = new[]
             {
-                new Sprite { Dir = mainDir, Name = "小克", Border = Color.FromArgb(232, 160, 70), Glow = Color.FromArgb(250, 200, 205) },
-                new Sprite { Dir = partnerDir, Name = "DS", Border = Color.FromArgb(77, 107, 254), Glow = Color.FromArgb(190, 205, 255),
+                new Sprite { Dir = mainDir, Name = "小克", Border = SlotColors[0], Glow = Color.FromArgb(250, 200, 205) },
+                new Sprite { Dir = partnerDir, Name = "DS", Border = SlotColors[1], Glow = Color.FromArgb(190, 205, 255),
                              Visible = !string.IsNullOrEmpty(partnerDir) },
+                new Sprite { Name = "3号", Border = SlotColors[2], Glow = Color.FromArgb(190, 235, 200), Visible = false },
+                new Sprite { Name = "4号", Border = SlotColors[3], Glow = Color.FromArgb(225, 200, 245), Visible = false },
             };
             anim.Interval = 50;
             anim.Tick += delegate
@@ -150,8 +172,7 @@ namespace AppPilot
                 }
             };
             anim.Start();
-            SetMood(0, "idle");
-            SetMood(1, "idle");
+            for (int i = 0; i < sprites.Length; i++) SetMood(i, "idle");
         }
 
         int S(int px) { return (int)Math.Round(px * dpi); }
@@ -194,7 +215,7 @@ namespace AppPilot
             Sprite s = At(i);
             if (string.IsNullOrEmpty(newDir) || newDir == s.Dir) return;
             s.Dir = newDir;
-            s.Visible = true;
+            s.Visible = i < count;
             string m = string.IsNullOrEmpty(s.Wanted) ? "idle" : s.Wanted;
             s.Wanted = "";
             SetMood(i, m);
@@ -567,14 +588,19 @@ namespace AppPilot
             petContent.BackColor = Theme.Card;
             pet.Dock = DockStyle.Fill;
             petContent.Controls.Add(pet);
-            TableLayoutPanel selectors = new TableLayoutPanel();
+            selectors = new TableLayoutPanel();
             selectors.Dock = DockStyle.Top; selectors.Height = S(32);
-            selectors.ColumnCount = 2; selectors.RowCount = 1;
-            selectors.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            selectors.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            selectors.Controls.Add(BuildPetSelector(0), 0, 0);
-            selectors.Controls.Add(BuildPetSelector(1), 1, 0);
+            selectors.ColumnCount = 1 + AgentState.MaxSpeakers; selectors.RowCount = 1;
+            selectors.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, S(66)));
+            for (int i = 0; i < AgentState.MaxSpeakers; i++) selectors.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
+            selectors.Controls.Add(BuildCountSelector(), 0, 0);
+            for (int i = 0; i < AgentState.MaxSpeakers; i++)
+            {
+                petBoxes[i] = BuildPetSelector(i);
+                selectors.Controls.Add(petBoxes[i], i + 1, 0);
+            }
             petContent.Controls.Add(selectors);
+            ApplyPetCount(ReadPetCount());
             thinkCard = Card("思考", petContent);
 
             txtLog = new TextBox();
@@ -690,8 +716,65 @@ namespace AppPilot
 
         static string PetConfigPath(int slot)
         {
-            // Keep the existing partner preference compatible with earlier versions.
-            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, slot == 0 ? "pet-main.txt" : "pet.txt");
+            // 1、2 号位沿用早期版本的文件名(pet-main.txt / pet.txt),3、4 号位是 pet-3.txt / pet-4.txt
+            string name = slot == 0 ? "pet-main.txt" : slot == 1 ? "pet.txt" : "pet-" + (slot + 1) + ".txt";
+            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, name);
+        }
+
+        static readonly string[] DefaultPets = { "claude", "deepseek", "chatgpt", "gemini" };
+        TableLayoutPanel selectors;
+        readonly ComboBox[] petBoxes = new ComboBox[AgentState.MaxSpeakers];
+        ComboBox cmbCount;
+
+        static string PetCountPath { get { return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "pet-count.txt"); } }
+
+        static int ReadPetCount()
+        {
+            try
+            {
+                int n;
+                if (File.Exists(PetCountPath) && int.TryParse(File.ReadAllText(PetCountPath, Encoding.UTF8).Trim(), out n))
+                    return Math.Max(1, Math.Min(AgentState.MaxSpeakers, n));
+            }
+            catch { }
+            return 2;
+        }
+
+        /// <summary>形象数量 1~4 人。</summary>
+        ComboBox BuildCountSelector()
+        {
+            ComboBox cb = new ComboBox();
+            cb.DropDownStyle = ComboBoxStyle.DropDownList;
+            cb.FlatStyle = FlatStyle.Flat;
+            cb.Dock = DockStyle.Fill;
+            cb.AccessibleName = "形象数量";
+            cb.Font = fontSmall; cb.BackColor = Theme.Card; cb.ForeColor = Theme.Text;
+            cb.Margin = new Padding(0, 0, S(4), 0);
+            for (int i = 1; i <= AgentState.MaxSpeakers; i++) cb.Items.Add(i + " 人");
+            cb.SelectedIndex = ReadPetCount() - 1;
+            cb.SelectedIndexChanged += delegate
+            {
+                int n = cb.SelectedIndex + 1;
+                ApplyPetCount(n);
+                try { File.WriteAllText(PetCountPath, n.ToString(), Encoding.UTF8); } catch { }
+            };
+            cmbCount = cb;
+            return cb;
+        }
+
+        void ApplyPetCount(int n)
+        {
+            n = Math.Max(1, Math.Min(AgentState.MaxSpeakers, n));
+            pet.Count = n;
+            if (selectors == null) return;
+            selectors.SuspendLayout();
+            for (int i = 0; i < AgentState.MaxSpeakers; i++)
+            {
+                bool on = i < n;
+                if (petBoxes[i] != null) petBoxes[i].Visible = on;
+                selectors.ColumnStyles[i + 1] = on ? new ColumnStyle(SizeType.Percent, 100f / n) : new ColumnStyle(SizeType.Absolute, 0);
+            }
+            selectors.ResumeLayout();
         }
 
         ComboBox BuildPetSelector(int slot)
@@ -701,13 +784,13 @@ namespace AppPilot
             cb.FlatStyle = FlatStyle.Flat;
             cb.Dock = DockStyle.Fill;
             cb.DropDownWidth = S(185);
-            cb.AccessibleName = slot == 0 ? "左侧人设" : "右侧人设";
+            cb.AccessibleName = (slot + 1) + " 号位人设";
             cb.Font = fontSmall;
             cb.BackColor = Theme.Card;
             cb.ForeColor = Theme.Text;
-            cb.Margin = new Padding(slot == 0 ? 0 : S(4), 0, slot == 0 ? S(4) : 0, 0);
+            cb.Margin = new Padding(slot == 0 ? 0 : S(2), 0, S(2), 0);
             string saved = ReadSavedPetId(slot);
-            PopulatePets(cb, saved == "" ? (slot == 0 ? "claude" : "deepseek") : saved, slot);
+            PopulatePets(cb, saved == "" ? DefaultPets[slot] : saved, slot);
             cb.SelectedIndexChanged += delegate
             {
                 PetItem it = cb.SelectedItem as PetItem;
@@ -729,7 +812,7 @@ namespace AppPilot
             string name = item.Name;
             pet.SetPetDir(slot, item.Dir);
             pet.SetName(slot, name);
-            agent.SetDisplayName(slot == 0 ? AgentState.Main : AgentState.Partner, name);
+            agent.SetDisplayName(AgentState.Ids[slot], name);
         }
 
         static string ReadSavedPetId(int slot)
@@ -741,7 +824,7 @@ namespace AppPilot
         void PopulatePets(ComboBox cb, string selectId, int slot)
         {
             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            string prefix = slot == 0 ? "左: " : "右: ";
+            string prefix = (slot + 1) + ": ";
             List<PetItem> items = new List<PetItem>();
 
             string defaultDir = Path.Combine(baseDir, "pet");
@@ -1010,8 +1093,7 @@ namespace AppPilot
                 try { mgr.Refresh(); } catch { }
                 if (!cmbWindows.DroppedDown) RebuildList();
             }
-            pet.SetMood(0, agent.MoodOf(AgentState.Main)); // moods expire back to idle
-            pet.SetMood(1, agent.MoodOf(AgentState.Partner));
+            for (int i = 0; i < AgentState.MaxSpeakers; i++) pet.SetMood(i, agent.MoodOf(AgentState.Ids[i])); // moods expire back to idle
             bool rec = recorder.Recording;
             timer.Interval = rec ? 100 : 300; // 录像时预览刷新快一些,视频里的游戏画面更流畅
             string recText = rec ? "■ 停止录像 " + recorder.Elapsed.ToString(@"hh\:mm\:ss") : "● 开始录像";
@@ -1184,8 +1266,7 @@ namespace AppPilot
                 {
                     DialogEntry d = dialog[i];
                     bool latest = shown < 2;
-                    bool ds = d.Who == AgentState.Partner;
-                    Color who = ds ? Color.FromArgb(77, 107, 254) : Color.FromArgb(214, 120, 30);
+                    Color who = PetPanel.SlotColors[AgentState.SlotOf(d.Who)];
                     string kind = AgentState.KindLabel(d.Kind);
                     Append("\n" + d.Time.ToString("HH:mm:ss") + "  ", Theme.Muted, fontSmall);
                     Append(d.Name + (kind != "" ? "【" + kind + "】" : "") + "  ", who, fontBold);
@@ -1194,15 +1275,16 @@ namespace AppPilot
                 any = true;
             }
             if (!any)
-                Append("AI 开始干活后,这里会显示当前游戏目标和两位角色的对话记录。", Theme.Muted, fontBody);
+                Append("AI 开始干活后,这里会显示当前游戏目标和各位角色的对话记录。", Theme.Muted, fontBody);
             rtbThink.SelectionStart = 0;
             rtbThink.ScrollToCaret();
 
-            string mine = agent.ThoughtOf(AgentState.Main), partner = agent.ThoughtOf(AgentState.Partner);
-            pet.Say(0, mine != "" ? mine : (any ? "" : "在呢～"));
-            pet.Say(1, partner);
-            pet.SetMood(0, agent.MoodOf(AgentState.Main));
-            pet.SetMood(1, agent.MoodOf(AgentState.Partner));
+            for (int i = 0; i < AgentState.MaxSpeakers; i++)
+            {
+                string said = agent.ThoughtOf(AgentState.Ids[i]);
+                pet.Say(i, i == 0 && said == "" && !any ? "在呢～" : said);
+                pet.SetMood(i, agent.MoodOf(AgentState.Ids[i]));
+            }
 
             txtLog.Text = string.Join("\r\n", agent.History.ToArray());
             txtLog.SelectionStart = txtLog.TextLength;
