@@ -417,17 +417,34 @@ class TextActions(Actions):
                 out.append({"item": item, "ok": False, "reason": "物品栏没找到"})
                 continue
             before_boxes = [_filled(m) for m in _card_boxes(f, slot["point"])]
-            before = shot()
-            drag(src[0], src[1], slot["point"][0], slot["point"][1] - 5, duration=1.2)
-            wait_change(before, timeout=2.5)
-            time.sleep(0.8)
-            f = self.frame()
+            named = isinstance(item, str) and item not in ("扳手", "wrench")
+            count_before = self._count_item(f, item) if named else None
+            ok = False
+            for attempt in range(2):  # 拖完核对物品栏：那件还在就说明没装上，换个落点再试一次
+                before = shot()
+                ty = slot["point"][1] - 5 if attempt == 0 else slot["point"][1] - 35
+                drag(src[0], src[1], slot["point"][0], ty, duration=1.4)
+                wait_change(before, timeout=2.5)
+                time.sleep(0.8)
+                f = self.ensure_board(self.frame())
+                if not named:
+                    ok = True
+                    break
+                if self._count_item(f, item) < count_before:
+                    ok = True
+                    break
+                src = self._locate_item(f, item) or src
             after_boxes = [_filled(m) for m in _card_boxes(f, slot["point"])]
             n = sum(after_boxes)
-            if isinstance(item, str) and item not in ("扳手", "wrench") and n == sum(before_boxes) + 1:
+            if ok and named and n == sum(before_boxes) + 1:
                 self._learn_card(f, slot["point"], n, A.norm(item))
-            out.append({"item": item, "ok": True, "slots_filled": sum(after_boxes)})
+            out.append({"item": item, "ok": ok, "slots_filled": sum(after_boxes),
+                        **({} if ok else {"reason": "拖了两次物品栏里还在，没装上（可能装备栏满了或目标不对）"})})
         return self._after({"results": out})
+
+    def _count_item(self, f, name):
+        name = A.norm(name)
+        return sum(1 for it in self.inventory(f)["items"] if it["name"] and self.same(it["name"], name))
 
     def wrench(self, body):
         return self.equip({"items": ["扳手"], "target": body.get("target") or {"name": body.get("name")}})

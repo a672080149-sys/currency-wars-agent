@@ -521,7 +521,7 @@ ROUTES = {
     "board": BRIDGE_CORE.board, "board_quick": BRIDGE_CORE.board_quick, "advise": BRIDGE_CORE.advise,
     "portraits_reload": lambda body: BRIDGE_CORE.portraits.reload(), "step": BRIDGE_CORE.step, "run": BRIDGE_CORE.run,
     "home": BRIDGE_CORE.home, "launch": BRIDGE_CORE.launch, "reward": BRIDGE_CORE.reward,
-    "say": lambda body: (workbench.send({k: body[k] for k in ("thought", "goal", "plan", "step", "clear", "note", "reason", "mood") if k in body}), {"ok": True})[1],
+    "say": lambda body: (workbench.send({k: body[k] for k in ("thought", "goal", "plan", "step", "clear", "note", "reason", "mood", "agent", "kind", "text") if k in body}), {"ok": True})[1],
     "record": lambda body: workbench.record(body.get("action", "status"), int(body.get("fps", 60))),
     "logs": BRIDGE_CORE.logs, "reset": lambda body: (BRIDGE_CORE.reset_match(), {"reset": True})[1],
 }

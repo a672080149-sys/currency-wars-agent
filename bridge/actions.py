@@ -83,7 +83,10 @@ def tap_wait(x, y, area=None, timeout=3.0, hold=0.075):
 
 
 def norm(name):
-    return (name or "").replace("干冶", "千冶").replace("•", "·").strip()
+    name = (name or "").replace("干冶", "千冶").replace("•", "·").strip()
+    if name == "星神☆阿哈":
+        return "星神★阿哈"
+    return "开拓者·欢愉" if name.upper() == "CT" else name
 
 
 # ---------------------------------------------------------------- 组合操作
@@ -304,7 +307,10 @@ class Actions:
                 bought.append({"name": offer.name, "ok": f.gold is not None and g0 is not None and f.gold < g0,
                                "gold": f.gold})
         for name in names:
-            offer = next((o for o in f.offers if self.same(o.name, name)), None)
+            offer = next((o for o in f.offers if norm(o.name) == norm(name)), None)  # 精确匹配，避免 砂金→砂金·戏浪
+            if offer is None:
+                cn = self.b.portraits.canonical(norm(name))
+                offer = next((o for o in f.offers if cn and self.b.portraits.canonical(norm(o.name)) == cn), None)
             if offer is None:
                 bought.append({"name": name, "ok": False, "reason": "商店没有"})
                 continue
@@ -331,7 +337,10 @@ class Actions:
         three = {norm(n) for n in body.get("three_star", ["流萤"])}
         skip = {norm(n) for n in body.get("skip", [])}
         max_rolls = int(body.get("max_rolls", 20))
+        always = {norm(n) for n in body.get("always_buy", [])}
+        must.update(always)
         stop_done = bool(body.get("stop_when_done", False))
+        stop_targets = {norm(n) for n in body.get("stop_targets", [])}
         want: dict[str, int] = {norm(k): int(v) for k, v in (body.get("want") or {}).items()}
 
         f = self.ensure_board()
@@ -362,15 +371,16 @@ class Actions:
         log, bought, seen, rolls = [], {}, set(), 0
         while True:
             if self.b.abort_flag:
-                break
+                return {"error": "搜牌已中止", "gold": f.gold, "rolls": rolls, "bought": bought, "log": log}
             offers = f.offers
             gold = f.gold
             log.append(f"[{rolls}] {gold} " + " ".join(f"{o.name}{o.cost}" + ("★2" if o.stars == 2 else "")
                                                      for o in offers))
             seen |= {norm(o.name) for o in offers if norm(o.name) in NOTE}
             for o in sorted(offers, key=lambda o: -o.column):
-                n = next((k for k in want if self.same(k, o.name)), None)
-                if n is None or want[n] <= 0 or gold is None:
+                # 买卡必须精确匹配名字：包含匹配会把「砂金」当成「砂金·戏浪」、「刃」当成「千冶·刃」
+                n = norm(o.name)
+                if gold is None or (n not in always and want.get(n, 0) <= 0):
                     continue
                 limit = 0 if (n in must or n in three) else floor - 3 if n in soft else floor
                 if gold - o.cost < limit:
@@ -378,14 +388,23 @@ class Actions:
                 tap_wait(*o.point, area=SHOP_ROW_AREA)
                 f2 = self.frame()
                 if f2.gold is not None and f2.gold < gold:
-                    want[n] -= 3 if o.stars == 2 else 1
+                    if n not in always:
+                        want[n] -= 3 ** max(0, (o.stars or 1) - 1)
                     bought[n] = bought.get(n, 0) + 1
                     gold = f2.gold
                     log.append(f"   买 {o.name} -> {gold}")
                 else:
                     log.append(f"   买 {o.name} 失败（备战席满？）")
+                    if stop_targets or n in always:
+                        return {"error": f"购买目标 {o.name} 失败，先检查备战席再搜牌",
+                                "gold": f2.gold, "rolls": rolls, "bought": bought, "log": log}
                     want[n] = 0
                 f = f2
+                if f.page != Page.SHOP:
+                    return {"needs_review": True, "reason": "买卡后离开商店，先处理当前页面",
+                            "gold": f.gold, "rolls": rolls, "bought": bought, "log": log}
+            if stop_targets and all(want.get(n, 0) <= 0 for n in stop_targets):
+                break
             if stop_done and all(v <= 0 for v in want.values()):
                 break
             price = f.shop_refresh_price
@@ -407,6 +426,12 @@ class Actions:
         f = self.ensure_board()
         n = 0
         while f.page == Page.BOARD and (times == 0 or n < times):
+            if self.b.abort_flag:
+                return {"error": "买经验已中止", "bought": n, "gold": f.gold, "level": f.level}
+            if until and f.level is None:
+                return {"error": "读不到等级，停止买经验", "bought": n, "gold": f.gold}
+            if f.gold is None:
+                return {"error": "读不到金币，停止买经验", "bought": n, "level": f.level}
             if until and f.level is not None and f.level >= int(until):
                 break
             cost = f.experience_cost or 4
@@ -414,8 +439,11 @@ class Actions:
                 break
             if times == 0 and not until:
                 break
+            before = (f.gold, f.level, f.experience)
             tap_wait(*XP_BTN, area=(100, 820, 480, 1010), timeout=2.0)
             f = self.frame()
+            if before == (f.gold, f.level, f.experience):
+                return {"error": "买经验后局面未变化，停止重试", "bought": n, "gold": f.gold, "level": f.level}
             n += 1
         return {"bought": n, "gold": f.gold, "level": f.level, "exp": f.experience, "capacity": f.capacity}
 

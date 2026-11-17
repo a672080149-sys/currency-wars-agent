@@ -76,3 +76,30 @@ Claude Code ──MCP(stdio)──> bridge/mcp_server.py   普通权限，uv 临
 - 站位/费用来自 `knowledge/characters.json`（备战席的 M7A 站位判断不准）。
 - 装备图标库在 `bridge/icons/<inv|top|card>/名字__n.png`：认不出的物品会自动点开看名字后存入；身上装备（26x26 截块，中心=卡片中心+81 像素）直接用物品栏库比对。
 - 自行重启服务：杀掉 `bridge\server.py` 进程，再以 `CW_BACKEND=webview CW_CDP_PORT=9223` 后台启动（令牌从 小克工作台\token.txt 读）。
+
+## 双人模式：小克 × DS（2026-11-17，duo.py）
+
+DS = WorkBuddy 自带 CodeBuddy CLI 跑的 DeepSeek V4.1 Flash（`ds_client.py`，每次约 5 秒）。DS 不拿任何工具、不加载 MCP，只读文字回 JSON；操作由 `duo.py` 按白名单代她执行。人设、打法规则、可用操作和输出格式在 `duo_ds_system.md`。
+
+每一步的流程（小克=Claude 在 bridge 目录运行）：
+
+```bat
+python -X utf8 duo.py propose [--note "补充说明"]      :: DS 读 look 局面并提议（气泡显示）
+python -X utf8 duo.py reply agree  "小克的话" [--actions "[...]"]   :: 同意（可带修改后的操作）
+python -X utf8 duo.py reply object "小克的意见" [--actions "[...]"] :: 反对：DS 回应，最多两轮，之后按小克方案
+python -X utf8 duo.py exec                               :: DS 执行已达成一致的方案，打印结果和执行后局面
+python -X utf8 duo.py status
+```
+
+DS 回复「同意」时以小克给出的操作为准（她偶尔会把旧方案原样带回）。状态存在 `duo_state.json`。
+工作台发言：`/api/status` 带 `agent=xiaoke|ds`、`kind=say|propose|agree|object|decide|exec|ask`。
+
+### 银狼执行规则更新 · 2026-11-18
+
+`duo_lineups/silverwolf.md` 保存用户确认的过渡、站位、改件和装备规则；`silverwolf.want.json` 保存基准星级目标，真珠顺手追三星，花火在砂金前台上阵后退出自动购卡目标。第9人为开拓者CT，不追6欢愉。主C之外按费用和实际作用优先换强力角色，不能只按星级保留低费卡；用 `buy` 或 `roll.want` 指定需要的替换角色。CT与开拓者·欢愉在识别和购卡缺口中按同一角色处理。
+
+`duo.py` 对银狼的 `exp`、`roll`、`fight` 执行经济检查：买经验保50金，先到7级；银狼三星前停买经验，按55金底线搜银狼；三星后停止专门搜牌，买经验最多到9级。真珠未三星不会延长刷新。原始桥接接口和其他阵容不自动套用此阶段规则。
+
+出战前会检查当前商店与剩余预算。买卡、刷新或买经验后返回 `needs_review`，本轮剩余计划暂停，状态为 `review`；下一轮重新读取棋盘、安排人口与装备再出战。识别或购买失败时停止并返回错误。生成后的提示词 `duo_state_system.md` 由 `build_system()` 从当前阵容与通用模板刷新。
+
+离线验证：`vendor\March7thAssistant\.venv\Scripts\python.exe -m unittest discover -s bridge\tests -v`。

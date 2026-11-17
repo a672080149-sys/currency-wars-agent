@@ -50,12 +50,16 @@ def cw_record(action: str = "status", fps: int = 60) -> str:
 
 @mcp.tool()
 def cw_say(thought: str | None = None, goal: list[str] | None = None, plan: list[str] | None = None,
-           step: int | None = None, clear: bool = False, note: str | None = None) -> str:
+           step: int | None = None, clear: bool = False, note: str | None = None,
+           agent: str | None = None, kind: str | None = None) -> str:
     """在小克工作台上展示你的思考（用户在看，之后会做成带配音的视频）。
     thought=显示在小克头顶气泡里并进入思考记录：要口语化，像主播边打边聊，说清楚看到了什么、为什么这么做，每个操作前后都可以说；
     goal=当前游戏目标（如 ["升6搜流萤", "攒到50金币吃利息"]），显示在面板顶部，目标变了再更新；
-    plan/step=非游戏的步骤清单；note=记一条日志。工作台没开时无影响。"""
-    body = {k: v for k, v in {"thought": thought, "goal": goal, "plan": plan, "step": step, "note": note}.items() if v is not None}
+    plan/step=非游戏的步骤清单；note=记一条日志。工作台没开时无影响。
+    agent=xiaoke(默认)|ds：双人模式下谁在说话（各自的桌宠头顶气泡）；
+    kind=say|propose(提议)|agree(同意)|object(反对)|decide(决定)|exec(执行)|ask(提问)，显示在对话记录里。"""
+    body = {k: v for k, v in {"thought": thought, "goal": goal, "plan": plan, "step": step, "note": note,
+                               "agent": agent, "kind": kind}.items() if v is not None}
     if clear:
         body["clear"] = True
     return _j("say", body)

@@ -52,6 +52,23 @@ AI 通过接口读取游戏画面（已尽量转成文字）、买卡、上阵�
 
 装备图标靠自学习的图标库识别（`bridge/icons/`，认不出的会自动点开看一次名字并记住）；`move`/`sell`/`equip`/`combine` 等操作执行后直接返回变化后的棋盘文字。完整路由见 [bridge/README.md](bridge/README.md)。
 
+## 双人模式：小克 × DS
+
+两个 AI 同台打：DS（[WorkBuddy](https://www.codebuddy.cn/) 自带 CLI 跑的 DeepSeek）读局面、提操作意见；小克（Claude）判断后同意或反对，最多讨论两轮，之后由小克拍板，再由 DS 执行。工作台思考栏底部并排两个桌宠，各自的气泡显示发言，上方是带「提议/同意/反对/决定/执行」标签的对话记录。
+
+- DS 不拿任何工具、不加载 MCP，只读文字回 JSON；操作由 `bridge/duo.py` 按白名单代她执行。
+- 规则拆成通用规则 `bridge/duo_ds_system.md` + 可切换阵容 `bridge/duo_lineups/<名>.md`（当前阵容写在 `bridge/duo_lineup.txt`），刷新目标按 `<名>.want.json` 的终局星级自动算缺口。
+- 通用打法经验见 `knowledge/通用对局规则.md`。
+- `bridge/duo_auto.py` 让 DS 单独连续打完一局（无人审核，适合挂机，结束时自动停止录像）。
+- 搭档桌宠读取 `小克工作台/pets/deepseek/`（本仓库不附带该素材，没有时只显示小克一个）。
+
+用法和接口见 [bridge/README.md](bridge/README.md)「双人模式」一节。离线测试：
+
+```bat
+cd bridge
+python -X utf8 -m unittest discover -s tests -v
+```
+
 ## 不包含的内容
 
 - 任何凭证：`bridge/.token`、`小克工作台/token.txt`（每次运行自动生成）、`小克工作台/webview-data/`（云游戏登录态）。

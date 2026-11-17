@@ -19,3 +19,12 @@ __pycache__/
 
 # 依赖
 vendor/
+
+# 双人模式运行产物 / 本机配置
+bridge/duo_state.json
+bridge/duo_state_system.md
+小克工作台/pet.txt
+小克工作台/pet-main.txt
+小克工作台/pets/
+.workbuddy/
+knowledge/lineups/

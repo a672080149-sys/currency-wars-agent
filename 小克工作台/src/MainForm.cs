@@ -94,67 +94,130 @@ namespace AppPilot
     }
 
     /// <summary>
-    /// The Claudia desktop pet (sprites from kirito1207/claudia-pet), fixed at the bottom of the thinking card.
-    /// 头顶一个小气泡说当前在想什么;上方的 History 区显示当前游戏目标和思考记录。Not draggable.
+    /// 思考栏底部的桌宠(素材来自 kirito1207/claudia-pet 等)。双人模式:左边小克(Claudia)、右边搭档(默认 DeepSeek),
+    /// 各自头顶一个气泡显示自己当前说的话;上方的 History 区显示当前游戏目标和两人的对话记录。Not draggable.
     /// </summary>
     public class PetPanel : Panel
     {
         const int Columns = 8;
         public readonly RichTextBox History = new RichTextBox();
-        public const int BubbleLines = 6;
-        readonly Font sayFont;
-        string say = "";
-        readonly string dir;
+        public const int BubbleLines = 5;
+        readonly Font sayFont, nameFont;
         readonly float dpi;
         readonly System.Windows.Forms.Timer anim = new System.Windows.Forms.Timer();
-        Bitmap sheet;
-        int frames, cell, frame;
-        string mood = "", wanted = "";
-        Rectangle petRect, bubbleRect;
 
-        public PetPanel(string dir, float dpi)
+        class Sprite
         {
-            this.dir = dir; this.dpi = dpi;
+            public string Dir, Name;
+            public Color Border, Glow;
+            public Bitmap Sheet;
+            public int Frames, Cell, Frame;
+            public string Mood = "", Wanted = "";
+            public string Say = "";
+            public bool Visible = true;
+            public Rectangle PetRect, BubbleRect;
+        }
+
+        readonly Sprite[] sprites;
+
+        /// <param name="mainDir">小克的素材目录</param>
+        /// <param name="partnerDir">搭档的素材目录(null 时只显示小克)</param>
+        public PetPanel(string mainDir, string partnerDir, float dpi)
+        {
+            this.dpi = dpi;
             DoubleBuffered = true;
             ResizeRedraw = true;
             BackColor = Theme.Card;
             History.ReadOnly = true; History.BorderStyle = BorderStyle.None; History.BackColor = Theme.Card;
             History.ScrollBars = RichTextBoxScrollBars.Vertical; History.DetectUrls = false; History.TabStop = false;
             Controls.Add(History);
-            sayFont = new Font(Theme.FontName, 10f);
+            sayFont = new Font(Theme.FontName, 9.5f);
+            nameFont = new Font(Theme.FontName, 9f, FontStyle.Bold);
+            sprites = new[]
+            {
+                new Sprite { Dir = mainDir, Name = "小克", Border = Color.FromArgb(232, 160, 70), Glow = Color.FromArgb(250, 200, 205) },
+                new Sprite { Dir = partnerDir, Name = "DS", Border = Color.FromArgb(77, 107, 254), Glow = Color.FromArgb(190, 205, 255),
+                             Visible = !string.IsNullOrEmpty(partnerDir) },
+            };
             anim.Interval = 50;
             anim.Tick += delegate
             {
-                if (sheet == null || frames == 0) return;
-                frame = (frame + 1) % frames;
-                Invalidate(petRect);
+                foreach (Sprite s in sprites)
+                {
+                    if (!s.Visible || s.Sheet == null || s.Frames == 0) continue;
+                    s.Frame = (s.Frame + 1) % s.Frames;
+                    Invalidate(s.PetRect);
+                }
             };
             anim.Start();
+            SetMood(0, "idle");
+            SetMood(1, "idle");
         }
 
         int S(int px) { return (int)Math.Round(px * dpi); }
 
-        /// <summary>头顶气泡里的话(当前思考)。</summary>
-        public void Say(string text)
+        Sprite At(int i) { return sprites[Math.Max(0, Math.Min(sprites.Length - 1, i))]; }
+
+        /// <summary>小克头顶气泡(兼容旧调用)。</summary>
+        public void Say(string text) { Say(0, text); }
+
+        /// <summary>第 i 个桌宠(0=小克,1=搭档)头顶气泡里的话。</summary>
+        public void Say(int i, string text)
         {
             text = (text ?? "").Trim();
-            if (text == say) return;
-            say = text;
+            Sprite s = At(i);
+            if (text == s.Say) return;
+            s.Say = text;
+            PerformLayout();
+            Invalidate();
+        }
+
+        public void SetName(int i, string name)
+        {
+            Sprite s = At(i);
+            if (string.IsNullOrEmpty(name) || s.Name == name) return;
+            s.Name = name;
             PerformLayout();
             Invalidate();
         }
 
         const TextFormatFlags SayFlags = TextFormatFlags.WordBreak | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.TextBoxControl;
-        int PadX { get { return S(14); } }
-        int PadY { get { return S(8); } }
+        int PadX { get { return S(12); } }
+        int PadY { get { return S(7); } }
         int Tail { get { return S(9); } }
 
-        /// <summary>Switches animation; the sheet is decoded off the UI thread.</summary>
-        public void SetMood(string m)
+        /// <summary>切换搭档(右边)的素材目录(兼容旧的桌宠下拉框)。</summary>
+        public void SetPetDir(string newDir) { SetPetDir(1, newDir); }
+
+        public void SetPetDir(int i, string newDir)
         {
-            if (m == wanted) return;
-            wanted = m;
-            string file = Path.Combine(dir, m + ".png");
+            Sprite s = At(i);
+            if (string.IsNullOrEmpty(newDir) || newDir == s.Dir) return;
+            s.Dir = newDir;
+            s.Visible = true;
+            string m = string.IsNullOrEmpty(s.Wanted) ? "idle" : s.Wanted;
+            s.Wanted = "";
+            SetMood(i, m);
+            PerformLayout();
+            Invalidate();
+        }
+
+        /// <summary>小克的表情(兼容旧调用)。</summary>
+        public void SetMood(string m) { SetMood(0, m); }
+
+        /// <summary>Switches animation; the sheet is decoded off the UI thread.</summary>
+        public void SetMood(int i, string m)
+        {
+            Sprite s = At(i);
+            if (m == s.Wanted || string.IsNullOrEmpty(s.Dir)) return;
+            s.Wanted = m;
+            string currentDir = s.Dir;
+            string file = Path.Combine(currentDir, m + ".png");
+            if (!File.Exists(file) && m != "idle")
+            {
+                string fallback = Path.Combine(currentDir, "idle.png");
+                if (File.Exists(fallback)) file = fallback;
+            }
             ThreadPool.QueueUserWorkItem(delegate
             {
                 Bitmap bmp = null;
@@ -172,11 +235,13 @@ namespace AppPilot
                 {
                     BeginInvoke((Action)delegate
                     {
-                        if (m != wanted || bmp == null) { if (bmp != null) bmp.Dispose(); return; }
-                        Bitmap old = sheet;
-                        sheet = bmp; frames = count; cell = bmp.Width / Columns; frame = 0; mood = m;
+                        if (m != s.Wanted || currentDir != s.Dir) { if (bmp != null) bmp.Dispose(); return; }
+                        Bitmap old = s.Sheet;
+                        if (bmp == null) { s.Sheet = null; s.Frames = 0; s.Frame = 0; }
+                        else { s.Sheet = bmp; s.Frames = count; s.Cell = bmp.Width / Columns; s.Frame = 0; }
+                        s.Mood = m;
                         if (old != null) old.Dispose();
-                        Invalidate(petRect);
+                        Invalidate(s.PetRect);
                     });
                 }
                 catch { if (bmp != null) bmp.Dispose(); }
@@ -203,26 +268,40 @@ namespace AppPilot
             finally { bmp.UnlockBits(d); }
         }
 
+        int NameHeight { get { return TextRenderer.MeasureText("国", nameFont).Height; } }
+
         protected override void OnLayout(LayoutEventArgs e)
         {
             base.OnLayout(e);
             if (sayFont == null) return;
-            int size = Math.Min(S(240), Math.Max(S(120), Height * 44 / 100));
-            // The figure sits in the middle ~70% of its frame, so the frame may overhang the bottom edge a little.
-            petRect = new Rectangle((Width - size) / 2, Height - size + size / 8, size, size);
-            int headTop = petRect.Top + size * 13 / 100;
-            int top = headTop;
-            if (say != "")
+            List<Sprite> shown = sprites.Where(s => s.Visible).ToList();
+            int n = Math.Max(1, shown.Count);
+            int colW = Width / n;
+            int size = Math.Min(S(220), Math.Max(S(100), Math.Min(Height * 40 / 100, colW - S(4))));
+            int top = Height;
+            int lineH = TextRenderer.MeasureText("国", sayFont).Height;
+            for (int k = 0; k < shown.Count; k++)
             {
-                int maxW = Math.Max(S(120), Width - S(16));
-                int lineH = TextRenderer.MeasureText("国", sayFont).Height;
-                Size t = TextRenderer.MeasureText(say, sayFont, new Size(maxW - 2 * PadX, int.MaxValue), SayFlags);
-                int th = Math.Min(t.Height, lineH * BubbleLines);
-                int bw = Math.Min(maxW, t.Width + 2 * PadX + S(2)), bh = th + 2 * PadY;
-                bubbleRect = new Rectangle((Width - bw) / 2, headTop - Tail - bh, bw, bh);
-                top = bubbleRect.Top;
+                Sprite s = shown[k];
+                int cx = colW * k + colW / 2;
+                // The figure sits in the middle ~70% of its frame, so the frame may overhang the bottom edge a little.
+                s.PetRect = new Rectangle(cx - size / 2, Height - size + size / 8, size, size);
+                int headTop = s.PetRect.Top + size * 13 / 100;
+                int bubbleTop = headTop;
+                if (s.Say != "")
+                {
+                    int maxW = Math.Max(S(100), colW - S(12));
+                    Size t = TextRenderer.MeasureText(s.Say, sayFont, new Size(maxW - 2 * PadX, int.MaxValue), SayFlags);
+                    int th = Math.Min(t.Height, lineH * BubbleLines) + NameHeight;
+                    int nameWidth = TextRenderer.MeasureText(s.Name, nameFont).Width;
+                    int bw = Math.Min(maxW, Math.Max(Math.Max(t.Width, nameWidth), S(60)) + 2 * PadX + S(2)), bh = th + 2 * PadY;
+                    int bx = Math.Max(colW * k + S(4), Math.Min(cx - bw / 2, colW * (k + 1) - S(4) - bw));
+                    s.BubbleRect = new Rectangle(bx, headTop - Tail - bh, bw, bh);
+                    bubbleTop = s.BubbleRect.Top;
+                }
+                else s.BubbleRect = Rectangle.Empty;
+                top = Math.Min(top, bubbleTop);
             }
-            else bubbleRect = Rectangle.Empty;
             History.Bounds = new Rectangle(0, 0, Width, Math.Max(S(60), top - S(10)));
         }
 
@@ -230,48 +309,57 @@ namespace AppPilot
         {
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            if (sheet != null && frames > 0)
+            foreach (Sprite s in sprites)
             {
-                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                g.PixelOffsetMode = PixelOffsetMode.Half;
-                g.DrawImage(sheet, petRect, new Rectangle((frame % Columns) * cell, (frame / Columns) * cell, cell, cell), GraphicsUnit.Pixel);
-                g.PixelOffsetMode = PixelOffsetMode.Default;
+                if (!s.Visible) continue;
+                if (s.Sheet != null && s.Frames > 0)
+                {
+                    g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                    g.PixelOffsetMode = PixelOffsetMode.Half;
+                    g.DrawImage(s.Sheet, s.PetRect, new Rectangle((s.Frame % Columns) * s.Cell, (s.Frame / Columns) * s.Cell, s.Cell, s.Cell), GraphicsUnit.Pixel);
+                    g.PixelOffsetMode = PixelOffsetMode.Default;
+                }
+                if (s.Say == "" || s.BubbleRect.IsEmpty) continue;
+                Rectangle b = s.BubbleRect;
+                int r = Math.Min(b.Height / 2, S(14)), tail = Tail;
+                int cx = Math.Max(b.Left + r + tail, Math.Min(b.Right - r - tail, s.PetRect.Left + s.PetRect.Width / 2));
+                using (GraphicsPath p = new GraphicsPath())
+                {
+                    p.AddArc(b.Left, b.Top, r * 2, r * 2, 180, 90);
+                    p.AddArc(b.Right - r * 2, b.Top, r * 2, r * 2, 270, 90);
+                    p.AddArc(b.Right - r * 2, b.Bottom - r * 2, r * 2, r * 2, 0, 90);
+                    p.AddLine(cx + tail, b.Bottom, cx, b.Bottom + tail);
+                    p.AddLine(cx, b.Bottom + tail, cx - tail, b.Bottom);
+                    p.AddArc(b.Left, b.Bottom - r * 2, r * 2, r * 2, 90, 90);
+                    p.CloseFigure();
+                    using (SolidBrush fill = new SolidBrush(Color.White)) g.FillPath(fill, p);
+                    using (Pen pen = new Pen(s.Border, Math.Max(1.5f, 1.5f * dpi))) g.DrawPath(pen, p);
+                }
+                int nh = NameHeight;
+                TextRenderer.DrawText(g, s.Name, nameFont, new Rectangle(b.Left + PadX, b.Top + PadY, b.Width - 2 * PadX, nh), s.Border,
+                    TextFormatFlags.NoPrefix | TextFormatFlags.Left | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis);
+                Rectangle tr = new Rectangle(b.Left + PadX, b.Top + PadY + nh, b.Width - 2 * PadX, b.Height - 2 * PadY - nh);
+                TextRenderer.DrawText(g, s.Say, sayFont, tr, Theme.Text, SayFlags);
             }
-            if (say == "" || bubbleRect.IsEmpty) return;
-            Rectangle b = bubbleRect;
-            int r = Math.Min(b.Height / 2, S(16)), tail = Tail, cx = Width / 2;
-            using (GraphicsPath p = new GraphicsPath())
-            {
-                p.AddArc(b.Left, b.Top, r * 2, r * 2, 180, 90);
-                p.AddArc(b.Right - r * 2, b.Top, r * 2, r * 2, 270, 90);
-                p.AddArc(b.Right - r * 2, b.Bottom - r * 2, r * 2, r * 2, 0, 90);
-                p.AddLine(cx + tail, b.Bottom, cx, b.Bottom + tail);
-                p.AddLine(cx, b.Bottom + tail, cx - tail, b.Bottom);
-                p.AddArc(b.Left, b.Bottom - r * 2, r * 2, r * 2, 90, 90);
-                p.CloseFigure();
-                using (SolidBrush fill = new SolidBrush(Color.White)) g.FillPath(fill, p);
-                using (Pen pen = new Pen(Color.FromArgb(232, 160, 70), Math.Max(1.5f, 1.5f * dpi))) g.DrawPath(pen, p);
-            }
-            Rectangle tr = new Rectangle(b.Left + PadX, b.Top + PadY, b.Width - 2 * PadX, b.Height - 2 * PadY);
-            TextFormatFlags f = SayFlags;
-            if (tr.Height < sayFont.Height * 2) f |= TextFormatFlags.HorizontalCenter;
-            TextRenderer.DrawText(g, say, sayFont, tr, Theme.Text, f);
         }
 
         protected override void OnPaintBackground(PaintEventArgs e)
         {
             base.OnPaintBackground(e);
-            // 宠物身后一圈淡淡的暖色光晕
-            if (petRect.IsEmpty) return;
-            Rectangle glow = Rectangle.Inflate(petRect, -petRect.Width / 10, -petRect.Height / 10);
-            using (GraphicsPath gp = new GraphicsPath())
+            // 每个宠物身后一圈淡淡的光晕(小克暖色、DS 蓝色)
+            foreach (Sprite s in sprites)
             {
-                gp.AddEllipse(glow);
-                using (PathGradientBrush br = new PathGradientBrush(gp))
+                if (!s.Visible || s.PetRect.IsEmpty) continue;
+                Rectangle glow = Rectangle.Inflate(s.PetRect, -s.PetRect.Width / 10, -s.PetRect.Height / 10);
+                using (GraphicsPath gp = new GraphicsPath())
                 {
-                    br.CenterColor = Color.FromArgb(70, 250, 200, 205);
-                    br.SurroundColors = new[] { Color.FromArgb(0, 250, 200, 205) };
-                    e.Graphics.FillPath(br, gp);
+                    gp.AddEllipse(glow);
+                    using (PathGradientBrush br = new PathGradientBrush(gp))
+                    {
+                        br.CenterColor = Color.FromArgb(70, s.Glow);
+                        br.SurroundColors = new[] { Color.FromArgb(0, s.Glow) };
+                        e.Graphics.FillPath(br, gp);
+                    }
                 }
             }
         }
@@ -283,6 +371,15 @@ namespace AppPilot
         {
             public ManagedWindow Window;
             public string Label;
+            public override string ToString() { return Label; }
+        }
+
+        class PetItem
+        {
+            public string Id;
+            public string Name;
+            public string Label;
+            public string Dir;
             public override string ToString() { return Label; }
         }
 
@@ -459,9 +556,26 @@ namespace AppPilot
             preview.KeyDown += ForwardKeyDown;
             preview.KeyPress += PreviewKeyPress;
 
-            pet = new PetPanel(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "pet"), dpi);
+            // 小克默认用 AI-Buddy 版形象(pets/claude);没有时退回内置 Claudia(pet/)
+            string initialPetDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "pets", "claude");
+            if (!File.Exists(Path.Combine(initialPetDir, "idle.png")))
+                initialPetDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "pet");
+            string partnerDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "pets", "deepseek");
+            pet = new PetPanel(initialPetDir, Directory.Exists(partnerDir) ? partnerDir : null, dpi);
             rtbThink = pet.History;
-            thinkCard = Card("思考", pet);
+            Panel petContent = new Panel();
+            petContent.BackColor = Theme.Card;
+            pet.Dock = DockStyle.Fill;
+            petContent.Controls.Add(pet);
+            TableLayoutPanel selectors = new TableLayoutPanel();
+            selectors.Dock = DockStyle.Top; selectors.Height = S(32);
+            selectors.ColumnCount = 2; selectors.RowCount = 1;
+            selectors.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            selectors.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            selectors.Controls.Add(BuildPetSelector(0), 0, 0);
+            selectors.Controls.Add(BuildPetSelector(1), 1, 0);
+            petContent.Controls.Add(selectors);
+            thinkCard = Card("思考", petContent);
 
             txtLog = new TextBox();
             txtLog.Multiline = true; txtLog.ReadOnly = true; txtLog.BorderStyle = BorderStyle.None;
@@ -537,7 +651,7 @@ namespace AppPilot
         }
 
         /// <summary>A white panel with a hairline border and a small muted title.</summary>
-        Panel Card(string title, Control content)
+        Panel Card(string title, Control content, Control headerRight = null)
         {
             Panel outer = new Panel();
             outer.BackColor = Theme.Border;
@@ -546,13 +660,147 @@ namespace AppPilot
             inner.Dock = DockStyle.Fill; inner.BackColor = Theme.Card;
             inner.Padding = new Padding(S(14), S(10), S(12), S(12));
             Label head = new Label();
-            head.Text = title; head.Dock = DockStyle.Top; head.Height = S(26);
-            head.Font = fontBold; head.ForeColor = Theme.Muted;
+            head.Text = title; head.Font = fontBold; head.ForeColor = Theme.Muted;
             content.Dock = DockStyle.Fill;
             inner.Controls.Add(content);
-            inner.Controls.Add(head);
+            if (headerRight != null)
+            {
+                Panel header = new Panel();
+                header.Dock = DockStyle.Top; header.Height = S(28); header.BackColor = Theme.Card;
+                head.Dock = DockStyle.Left; head.AutoSize = true; head.TextAlign = ContentAlignment.MiddleLeft;
+                headerRight.Dock = DockStyle.Right;
+                header.Controls.Add(headerRight);
+                header.Controls.Add(head);
+                inner.Controls.Add(header);
+            }
+            else
+            {
+                head.Dock = DockStyle.Top; head.Height = S(26);
+                inner.Controls.Add(head);
+            }
             outer.Controls.Add(inner);
             return outer;
+        }
+
+        static readonly string[] KnownAiBuddyOrder = new[]
+        {
+            "deepseek", "claude", "chatgpt", "gemini", "qwen", "kimi",
+            "grok", "seed", "minimax", "glm", "hunyuan"
+        };
+
+        static string PetConfigPath(int slot)
+        {
+            // Keep the existing partner preference compatible with earlier versions.
+            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, slot == 0 ? "pet-main.txt" : "pet.txt");
+        }
+
+        ComboBox BuildPetSelector(int slot)
+        {
+            ComboBox cb = new ComboBox();
+            cb.DropDownStyle = ComboBoxStyle.DropDownList;
+            cb.FlatStyle = FlatStyle.Flat;
+            cb.Dock = DockStyle.Fill;
+            cb.DropDownWidth = S(185);
+            cb.AccessibleName = slot == 0 ? "左侧人设" : "右侧人设";
+            cb.Font = fontSmall;
+            cb.BackColor = Theme.Card;
+            cb.ForeColor = Theme.Text;
+            cb.Margin = new Padding(slot == 0 ? 0 : S(4), 0, slot == 0 ? S(4) : 0, 0);
+            string saved = ReadSavedPetId(slot);
+            PopulatePets(cb, saved == "" ? (slot == 0 ? "claude" : "deepseek") : saved, slot);
+            cb.SelectedIndexChanged += delegate
+            {
+                PetItem it = cb.SelectedItem as PetItem;
+                if (it == null) return;
+                ApplyPet(slot, it);
+                try { File.WriteAllText(PetConfigPath(slot), it.Id, Encoding.UTF8); }
+                catch (Exception ex) { agent.Fail("保存人设失败: " + ex.Message); }
+            };
+            cb.DropDown += delegate
+            {
+                PetItem cur = cb.SelectedItem as PetItem;
+                PopulatePets(cb, cur != null ? cur.Id : ReadSavedPetId(slot), slot);
+            };
+            return cb;
+        }
+
+        void ApplyPet(int slot, PetItem item)
+        {
+            string name = item.Name;
+            pet.SetPetDir(slot, item.Dir);
+            pet.SetName(slot, name);
+            agent.SetDisplayName(slot == 0 ? AgentState.Main : AgentState.Partner, name);
+        }
+
+        static string ReadSavedPetId(int slot)
+        {
+            try { return File.Exists(PetConfigPath(slot)) ? File.ReadAllText(PetConfigPath(slot), Encoding.UTF8).Trim() : ""; }
+            catch { return ""; }
+        }
+
+        void PopulatePets(ComboBox cb, string selectId, int slot)
+        {
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string prefix = slot == 0 ? "左: " : "右: ";
+            List<PetItem> items = new List<PetItem>();
+
+            string defaultDir = Path.Combine(baseDir, "pet");
+            if (File.Exists(Path.Combine(defaultDir, "idle.png")))
+                items.Add(new PetItem { Id = "claudia", Name = "小克", Label = prefix + "小克", Dir = defaultDir });
+
+            string petsDir = Path.Combine(baseDir, "pets");
+            if (Directory.Exists(petsDir))
+            {
+                Dictionary<string, PetItem> found = new Dictionary<string, PetItem>(StringComparer.OrdinalIgnoreCase);
+                foreach (string d in Directory.GetDirectories(petsDir))
+                {
+                    if (!File.Exists(Path.Combine(d, "idle.png"))) continue;
+                    string id = Path.GetFileName(d);
+                    string label = id;
+                    string nameFile = Path.Combine(d, "name.txt");
+                    try
+                    {
+                        if (File.Exists(nameFile))
+                        {
+                            string n = File.ReadAllText(nameFile, Encoding.UTF8).Trim();
+                            if (!string.IsNullOrEmpty(n)) label = n;
+                        }
+                    }
+                    catch { }
+                    label = System.Text.RegularExpressions.Regex.Replace(label, @"\s*[（(][^()（）]*[)）]", "").Trim();
+                    if (label == "") label = id;
+                    found[id] = new PetItem { Id = id, Name = label, Label = prefix + label, Dir = d };
+                }
+                foreach (string id in KnownAiBuddyOrder)
+                {
+                    PetItem it;
+                    if (found.TryGetValue(id, out it)) { items.Add(it); found.Remove(id); }
+                }
+                List<PetItem> rest = new List<PetItem>(found.Values);
+                rest.Sort(delegate(PetItem a, PetItem b) { return string.Compare(a.Id, b.Id, StringComparison.OrdinalIgnoreCase); });
+                items.AddRange(rest);
+            }
+
+            if (items.Count == 0)
+                items.Add(new PetItem { Id = "claudia", Name = "小克", Label = prefix + "小克", Dir = defaultDir });
+
+            cb.BeginUpdate();
+            cb.Items.Clear();
+            int sel = 0;
+            for (int i = 0; i < items.Count; i++)
+            {
+                cb.Items.Add(items[i]);
+                if (!string.IsNullOrEmpty(selectId) && string.Equals(items[i].Id, selectId, StringComparison.OrdinalIgnoreCase))
+                    sel = i;
+            }
+            cb.SelectedIndex = sel;
+            cb.EndUpdate();
+
+            PetItem active = cb.SelectedItem as PetItem;
+            if (active != null)
+            {
+                ApplyPet(slot, active);
+            }
         }
 
         Button MakeButton(string text, bool primary, EventHandler onClick)
@@ -762,7 +1010,8 @@ namespace AppPilot
                 try { mgr.Refresh(); } catch { }
                 if (!cmbWindows.DroppedDown) RebuildList();
             }
-            pet.SetMood(agent.Mood); // moods expire back to idle
+            pet.SetMood(0, agent.MoodOf(AgentState.Main)); // moods expire back to idle
+            pet.SetMood(1, agent.MoodOf(AgentState.Partner));
             bool rec = recorder.Recording;
             timer.Interval = rec ? 100 : 300; // 录像时预览刷新快一些,视频里的游戏画面更流畅
             string recText = rec ? "■ 停止录像 " + recorder.Elapsed.ToString(@"hh\:mm\:ss") : "● 开始录像";
@@ -903,10 +1152,9 @@ namespace AppPilot
 
         void UpdateAgentPanel()
         {
-            string thought = agent.Thought;
             List<string> goals = agent.Goals;
             List<PlanStep> plan = agent.Plan;
-            List<KeyValuePair<DateTime, string>> thoughts = agent.Thoughts;
+            List<DialogEntry> dialog = agent.Dialog;
             rtbThink.Clear();
             bool any = false;
             if (goals.Count > 0)
@@ -928,25 +1176,33 @@ namespace AppPilot
                 }
                 any = true;
             }
-            if (thoughts.Count > 0)
+            if (dialog.Count > 0)
             {
-                Append((any ? "\n\n" : "") + "思考记录", Theme.Muted, fontBold);
+                Append((any ? "\n\n" : "") + "对话记录", Theme.Muted, fontBold);
                 // 新的在上面,不用滚动就能看到最近的
-                for (int i = thoughts.Count - 1, shown = 0; i >= 0 && shown < 80; i--, shown++)
+                for (int i = dialog.Count - 1, shown = 0; i >= 0 && shown < 80; i--, shown++)
                 {
-                    bool latest = i == thoughts.Count - 1;
-                    Append("\n" + thoughts[i].Key.ToString("HH:mm:ss") + "  ", Theme.Muted, fontSmall);
-                    Append(thoughts[i].Value, latest ? Theme.Text : Theme.Muted, latest ? fontThought : fontBody);
+                    DialogEntry d = dialog[i];
+                    bool latest = shown < 2;
+                    bool ds = d.Who == AgentState.Partner;
+                    Color who = ds ? Color.FromArgb(77, 107, 254) : Color.FromArgb(214, 120, 30);
+                    string kind = AgentState.KindLabel(d.Kind);
+                    Append("\n" + d.Time.ToString("HH:mm:ss") + "  ", Theme.Muted, fontSmall);
+                    Append(d.Name + (kind != "" ? "【" + kind + "】" : "") + "  ", who, fontBold);
+                    Append(d.Text, latest ? Theme.Text : Theme.Muted, latest ? fontThought : fontBody);
                 }
                 any = true;
             }
             if (!any)
-                Append("AI 开始干活后,这里会显示当前游戏目标和它的思考记录。", Theme.Muted, fontBody);
+                Append("AI 开始干活后,这里会显示当前游戏目标和两位角色的对话记录。", Theme.Muted, fontBody);
             rtbThink.SelectionStart = 0;
             rtbThink.ScrollToCaret();
 
-            pet.Say(thought != "" ? thought : (any ? "" : "在呢～"));
-            pet.SetMood(agent.Mood);
+            string mine = agent.ThoughtOf(AgentState.Main), partner = agent.ThoughtOf(AgentState.Partner);
+            pet.Say(0, mine != "" ? mine : (any ? "" : "在呢～"));
+            pet.Say(1, partner);
+            pet.SetMood(0, agent.MoodOf(AgentState.Main));
+            pet.SetMood(1, agent.MoodOf(AgentState.Partner));
 
             txtLog.Text = string.Join("\r\n", agent.History.ToArray());
             txtLog.SelectionStart = txtLog.TextLength;

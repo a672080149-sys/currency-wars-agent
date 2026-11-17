@@ -31,8 +31,10 @@
 | `src\` | C# 源代码:`Native.cs`(系统调用)、`Core.cs`(窗口管理与输入)、`ApiServer.cs`(HTTP 接口与 AI 状态)、`MainForm.cs`(界面与桌宠) |
 | `app.ico` | 程序图标 |
 | `build.cmd` | 用 Windows 自带的 C# 编译器重新编译,不需要安装 SDK |
-| `pet\` | 桌宠动画素材和授权说明 |
-| `tools\fetch-pet.ps1` | 重新下载、转换桌宠素材 |
+| `pet\` | 默认桌宠(小克 Claudia)动画素材和授权说明 |
+| `pets\` | 更多桌宠(来自 AI-Buddy 的 11 位模型娘)动画素材和授权说明 |
+| `tools\fetch-pet.ps1` | 重新下载、转换默认桌宠素材 |
+| `tools\fetch-ai-buddy-pets.py` | 下载并转换 AI-Buddy 11 位角色桌宠素材到 `pets\` |
 | `token.txt` | 接口令牌。**不在压缩包里**,首次运行时自动生成,每台机器各不相同 |
 
 解压到任意目录即可使用;如果 Windows 提示文件来自其他计算机,在 exe 的「属性」里勾选「解除锁定」。
@@ -154,7 +156,13 @@ Invoke-WebRequest "http://127.0.0.1:8765/api/screenshot?id=$($w.id)" -Headers $h
 
 ## 桌宠素材
 
-桌宠来自 [kirito1207/claudia-pet](https://github.com/kirito1207/claudia-pet),素材放在 `pet\` 目录,授权为 CC BY-NC-SA 4.0(需署名、**不得商用**),详见 `pet\NOTICE.md`。重新下载或更新素材:运行 `tools\fetch-pet.ps1`(先关闭 小克工作台)。删除 `pet\` 目录则不显示桌宠,其他功能不受影响。
+桌宠默认来自 [kirito1207/claudia-pet](https://github.com/kirito1207/claudia-pet),素材放在 `pet\` 目录,授权为 CC BY-NC-SA 4.0(需署名、**不得商用**),详见 `pet\NOTICE.md`。重新下载或更新素材:运行 `tools\fetch-pet.ps1`(先关闭 小克工作台)。
+
+额外角色桌宠来自 [lXiaoSel1/AI-Buddy](https://github.com/lXiaoSel1/AI-Buddy)(DeepSeek、Claude、GPT、Gemini、Qwen、Kimi、Grok、Seed、MiniMax、GLM、混元),素材放在 `pets\` 目录,授权为 Apache-2.0 + Commons Clause(详见 `pets\NOTICE.md`)。重新下载或更新 AI-Buddy 桌宠:运行 `python tools\fetch-ai-buddy-pets.py`。删除 `pet\` 与 `pets\` 目录则不显示桌宠,其他功能不受影响。
+
+「思考」标题下有 **左侧人设 / 右侧人设** 两个独立下拉框，两边都能选择所有已安装角色，包括 GPT + DeepSeek，也可以选择相同角色。选择后立即更新形象、气泡名称及后续对话和操作日志的署名；已有记录保留当时的名称。左侧选择保存在 `pet-main.txt`，右侧继续使用 `pet.txt`，重启后恢复；首次使用默认 Claude + DeepSeek（兼容原来的右侧选择）。
+
+这里切换的是人设和显示名称，实际模型调用保持原配置。接口仍用 `agent=xiaoke`（左侧，或省略）与 `agent=ds`（右侧）区分发言位置，也可以使用 `main` / `partner`，不随人设名称变化。
 
 ## 已知限制
 

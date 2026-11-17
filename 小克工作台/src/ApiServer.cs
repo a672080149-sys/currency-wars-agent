@@ -17,43 +17,118 @@ namespace AppPilot
         public string Status; // pending | in_progress | done
     }
 
-    /// <summary>What the agent says it is thinking and doing; shown in the side panel.</summary>
+    /// <summary>对话里的一句话:谁说的、什么类型(提议/同意/反对/决定/执行…)、内容。</summary>
+    public class DialogEntry
+    {
+        public DateTime Time;
+        public string Who;   // xiaoke | ds
+        public string Name;
+        public string Kind;  // say | propose | agree | object | decide | exec | ask
+        public string Text;
+    }
+
+    /// <summary>
+    /// What the agents say they are thinking and doing; shown in the side panel.
+    /// 支持两个 Agent 同台:小克(xiaoke,主决策)和 DS(ds,识别与执行),各自有气泡里的当前发言和桌宠表情,
+    /// 另有一条共享的对话记录。不带 agent 参数时一切照旧(按小克处理)。
+    /// </summary>
     public class AgentState
     {
+        public const string Main = "xiaoke";
+        public const string Partner = "ds";
+
+        class Speaker
+        {
+            public string Name;
+            public string Thought = "";
+            public string Mood = "idle";
+            public DateTime MoodTime;
+        }
+
         readonly object sync = new object();
-        string thought = "";
-        string mood = "idle"; // which pet animation fits what the agent is doing
-        DateTime moodTime;
+        readonly Dictionary<string, Speaker> speakers = new Dictionary<string, Speaker>
+        {
+            { Main, new Speaker { Name = "小克" } }, { Partner, new Speaker { Name = "DS" } }
+        };
         List<PlanStep> plan = new List<PlanStep>();
         List<string> goals = new List<string>();
         readonly List<string> history = new List<string>();
-        readonly List<KeyValuePair<DateTime, string>> thoughts = new List<KeyValuePair<DateTime, string>>();
+        readonly List<DialogEntry> dialog = new List<DialogEntry>();
 
         public event Action Changed;
 
-        public string Thought { get { lock (sync) return thought; } }
-
-        /// <summary>idle | thinking | writing | running | happy | oops. Falls back to idle when the agent goes quiet.</summary>
-        public string Mood
+        public static string Normalize(string who)
         {
-            get
+            string w = (who ?? "").Trim().ToLowerInvariant();
+            return (w == "ds" || w == "deepseek" || w == "partner" || w == "workbuddy") ? Partner : Main;
+        }
+
+        public string NameOf(string who) { lock (sync) return Get(who).Name; }
+
+        public void SetDisplayName(string who, string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return;
+            lock (sync) Get(who).Name = name;
+            Fire();
+        }
+
+        public static string KindLabel(string kind)
+        {
+            switch ((kind ?? "").ToLowerInvariant())
             {
-                lock (sync)
-                {
-                    double age = (DateTime.Now - moodTime).TotalSeconds;
-                    if (age > ((mood == "happy" || mood == "oops") ? 6 : 25)) mood = "idle";
-                    return mood;
-                }
+                case "propose": return "提议";
+                case "agree": return "同意";
+                case "object": return "反对";
+                case "decide": return "决定";
+                case "exec": return "执行";
+                case "ask": return "提问";
+                default: return "";
             }
         }
 
-        void SetMood(string m) { mood = m; moodTime = DateTime.Now; }
+        static string MoodForKind(string kind)
+        {
+            switch ((kind ?? "").ToLowerInvariant())
+            {
+                case "propose": return "writing";
+                case "agree": return "happy";
+                case "object": return "oops";
+                case "exec": return "running";
+                default: return "thinking";
+            }
+        }
+
+        Speaker Get(string who) { return speakers[Normalize(who)]; }
+
+        /// <summary>小克当前的话(兼容旧调用)。</summary>
+        public string Thought { get { return ThoughtOf(Main); } }
+        public string ThoughtOf(string who) { lock (sync) return Get(who).Thought; }
+
+        /// <summary>idle | thinking | writing | running | happy | oops. Falls back to idle when the agent goes quiet.</summary>
+        public string Mood { get { return MoodOf(Main); } }
+        public string MoodOf(string who)
+        {
+            lock (sync)
+            {
+                Speaker s = Get(who);
+                double age = (DateTime.Now - s.MoodTime).TotalSeconds;
+                if (age > ((s.Mood == "happy" || s.Mood == "oops") ? 6 : 25)) s.Mood = "idle";
+                return s.Mood;
+            }
+        }
+
+        void SetMood(string who, string m) { Speaker s = Get(who); s.Mood = m; s.MoodTime = DateTime.Now; }
         public List<PlanStep> Plan { get { lock (sync) return plan.ToList(); } }
         public List<string> History { get { lock (sync) return history.ToList(); } }
         /// <summary>当前游戏目标(如「升 6 搜流萤」),显示在面板顶部。</summary>
         public List<string> Goals { get { lock (sync) return goals.ToList(); } }
-        /// <summary>思考记录,旧的在前。</summary>
-        public List<KeyValuePair<DateTime, string>> Thoughts { get { lock (sync) return thoughts.ToList(); } }
+        /// <summary>对话记录,旧的在前。</summary>
+        public List<DialogEntry> Dialog { get { lock (sync) return dialog.ToList(); } }
+        /// <summary>小克的思考记录(兼容旧调用)。</summary>
+        public List<KeyValuePair<DateTime, string>> Thoughts
+        {
+            get { lock (sync) return dialog.Where(d => d.Who == Main).Select(d => new KeyValuePair<DateTime, string>(d.Time, d.Text)).ToList(); }
+        }
 
         public void SetGoals(List<string> g)
         {
@@ -61,13 +136,24 @@ namespace AppPilot
             Fire();
         }
 
-        public void SetThought(string t)
+        public void SetThought(string t) { Say(Main, t, "say"); }
+
+        /// <summary>某个 Agent 说一句话:更新它的气泡和表情,并记入对话。</summary>
+        public void Say(string who, string text, string kind)
         {
+            who = Normalize(who);
             lock (sync)
             {
-                thought = t ?? "";
-                if (thought != "") { thoughts.Add(new KeyValuePair<DateTime, string>(DateTime.Now, thought)); if (thoughts.Count > 300) thoughts.RemoveRange(0, 50); }
-                Append("思考: " + thought); SetMood("thinking");
+                Speaker s = Get(who);
+                s.Thought = text ?? "";
+                if (s.Thought != "")
+                {
+                    dialog.Add(new DialogEntry { Time = DateTime.Now, Who = who, Name = s.Name, Kind = (kind ?? "say").ToLowerInvariant(), Text = s.Thought });
+                    if (dialog.Count > 400) dialog.RemoveRange(0, 80);
+                }
+                string label = KindLabel(kind);
+                Append(NameOf(who) + (label != "" ? "【" + label + "】" : "") + ": " + s.Thought);
+                SetMood(who, MoodForKind(kind));
             }
             Fire();
         }
@@ -85,26 +171,39 @@ namespace AppPilot
             {
                 for (int i = 0; i < plan.Count; i++)
                     plan[i].Status = i < n - 1 ? "done" : (i == n - 1 ? "in_progress" : "pending");
-                if (plan.Count > 0 && n > plan.Count) { Append("计划全部完成"); SetMood("happy"); }
+                if (plan.Count > 0 && n > plan.Count) { Append("计划全部完成"); SetMood(Main, "happy"); }
             }
             Fire();
         }
 
-        public void Record(string what, string reason, string mood)
+        public void Record(string what, string reason, string mood) { Record(Main, what, reason, mood); }
+
+        public void Record(string who, string what, string reason, string mood)
         {
-            lock (sync) { Append("操作: " + what + (string.IsNullOrEmpty(reason) ? "" : "  —— " + reason)); SetMood(mood); }
+            lock (sync)
+            {
+                string prefix = NameOf(who) + " 操作: ";
+                Append(prefix + what + (string.IsNullOrEmpty(reason) ? "" : "  —— " + reason));
+                SetMood(who, mood);
+            }
             Fire();
         }
 
-        public void Fail(string message)
+        public void Fail(string message) { Fail(Main, message); }
+
+        public void Fail(string who, string message)
         {
-            lock (sync) { Append("出错: " + message); SetMood("oops"); }
+            lock (sync) { Append(NameOf(who) + " 出错: " + message); SetMood(who, "oops"); }
             Fire();
         }
 
         public void Clear()
         {
-            lock (sync) { thought = ""; plan = new List<PlanStep>(); goals = new List<string>(); history.Clear(); thoughts.Clear(); mood = "idle"; }
+            lock (sync)
+            {
+                foreach (Speaker s in speakers.Values) { s.Thought = ""; s.Mood = "idle"; }
+                plan = new List<PlanStep>(); goals = new List<string>(); history.Clear(); dialog.Clear();
+            }
             Fire();
         }
 
@@ -125,9 +224,16 @@ namespace AppPilot
             Dictionary<string, object> d = new Dictionary<string, object>();
             lock (sync)
             {
-                d["thought"] = thought;
+                d["thought"] = speakers[Main].Thought;
+                d["ds_thought"] = speakers[Partner].Thought;
+                d["main_name"] = speakers[Main].Name;
+                d["partner_name"] = speakers[Partner].Name;
                 d["goal"] = goals.ToList();
                 d["plan"] = plan.Select(s => new Dictionary<string, object> { { "text", s.Text }, { "status", s.Status } }).ToList();
+                d["dialog"] = dialog.Skip(Math.Max(0, dialog.Count - 10)).Select(e => new Dictionary<string, object>
+                {
+                    { "time", e.Time.ToString("HH:mm:ss") }, { "who", e.Who }, { "name", e.Name }, { "kind", e.Kind }, { "text", e.Text }
+                }).ToList();
             }
             return d;
         }
@@ -527,13 +633,14 @@ namespace AppPilot
                         agent.SetGoals(goals);
                     }
                     if (a.ContainsKey("step")) agent.SetStep(Int(a, "step", 0));
-                    string thought = Str(a, "thought", null);
-                    if (thought != null) agent.SetThought(thought);
+                    string who = AgentState.Normalize(Str(a, "agent", AgentState.Main));
+                    string thought = Str(a, "thought", null) ?? Str(a, "text", null);
+                    if (thought != null) agent.Say(who, thought, Str(a, "kind", "say"));
                     string note = Str(a, "note", null);
                     if (note != null)
                     {
                         string mood = Str(a, "mood", "running");
-                        if (mood == "oops") agent.Fail(note); else agent.Record(note, Str(a, "reason", null), mood);
+                        if (mood == "oops") agent.Fail(who, note); else agent.Record(who, note, Str(a, "reason", null), mood);
                     }
                     return agent.Describe();
                 }
@@ -561,7 +668,7 @@ GET  /api/ui_tree?id=1[&max=300]       界面元素树(名称、类型、位置�
 POST /api/ui_action {id,element|name|automation_id,action?=invoke|set_value|toggle|select|expand|collapse,value?}
 POST /api/cloud    {action=open|hide|reload|status}   内嵌云·星穹铁道(WebView2,带 CDP 调试端口)
 POST /api/record   {action=start|stop|status, fps?=60}   录制整个 小克工作台 窗口,存到 录像\*.mp4
-POST /api/status   {thought?,goal?:文字或[文字](当前游戏目标,| 或换行分隔),plan?:[文字或{text,status}],step?,clear?,note?,reason?,mood?}   上报 AI 的思考与计划(step 为当前进行到第几步,从 1 开始);note 记一条操作日志,mood=oops 记为出错
+POST /api/status   {agent?=xiaoke|ds,kind?=say|propose|agree|object|decide|exec|ask,thought?,goal?:文字或[文字](当前游戏目标,| 或换行分隔),plan?:[文字或{text,status}],step?,clear?,note?,reason?,mood?}   上报 AI 的思考与计划(step 为当前进行到第几步,从 1 开始);note 记一条操作日志,mood=oops 记为出错
 
 建议流程:status 上报计划 → launch → screenshot 看界面 → click/type/key 操作 → screenshot 验证。
 click/drag/type/key/scroll 都可带 mode:

@@ -20,6 +20,7 @@
 | `nodes_events.json` | 12 种节点类型规则 + 9 类事件（幕后茶歇/奇兽花园/骇入/共舞/巡海游侠/主角光环/奇遇伙伴等）+ 22 家竞争对手（首领与敌人池） | **12 + 9 + 22** |
 | `rules.md` | 模式规则：标准/超频博弈节点结构、职级体系（黑塔→财富造物主 + A1–A8）、经济与人口、血量伤害、商店刷新概率表、优势布局、43 条敌人词缀 | — |
 | `firefly_guide.md` | 「寒鸦流萤」高难阵容攻略：核心思路、站位、星级目标、装备、投资、光环、运营节奏 | — |
+| `lineups/*.md`（未随仓库公开：转述的是米游社作者的原创攻略） | 米游社「货币战争阵容分享」逐条拆解（含三阶段阵容、羁绊档位、装备配方、主角光环、首战强化、投资环境） | 4 套。**原分享中只有「6欢愉5幻月游戏·银狼」标注支持高难；银狼现按2026-11-18实战规则修订，7级追三星后升9，真珠前台三星生存位、花火被砂金替换，末位开拓者CT、不追6欢愉，主C之外费用优先于星级**；「6群攻4梦境交织」高难实测不适配，已标注弃用 |
 
 > `investments.json` 的 335 条中包含 wiki 原表按不同位面重复列出的同名策略（如「阿哈大悦」「星徽大使叽米」出现两次），未做合并，便于按 `planes` 字段精确查询。
 
@@ -49,6 +50,17 @@
 - `vendor/March7thAssistant/tasks/weekly/currency_wars_equipment.py`：27 个装备名 `ITEMS`、16 条合成配方 `RECIPES`、装备评分。
 - `vendor/March7thAssistant/tasks/weekly/currency_wars.py`：`BOSS_STAGES`、投资限制关键词、事件风险关键词、安全收益关键词、补给道具表、星徽优先级。
 - `vendor/March7thAssistant/tasks/weekly/currency_wars_ui.py`：页面名称（限时商店/开拓商店/黑市/骇入/共舞/游侠/奇兽花园/幕后茶歇…）、职级名 `RANK_NAMES`、A1–A8 解析、商店与光环界面文本。
+
+### 玩家阵容分享（米游社活动页）
+
+`lineups/` 下的三份攻略来自米游社「货币战争」活动页的阵容分享功能。活动页是 SPA，静态抓不到内容，需走接口：
+
+```
+GET https://act-api-takumi.miyoushe.com/event/rpgcurrencywar/game/lineup/detail?id=<lineup_id>&game=hkrpg
+Header x-rpc-currencywar-tourn: tourn   # 缺失会返回 retcode -502
+```
+
+`lineup_id` 取自分享链接 `#/lineup/<id>`。返回体含三阶段阵容（Early/Middle/Final）、角色 S2 技能文本（按星级）、装备与合成配方、主角光环、首战强化、投资环境、`share_code`。**这是目前唯一能拿到 S2 角色技能原文的来源**（wiki 赛季页仍在施工）。
 
 ---
 
